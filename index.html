@@ -16,20 +16,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=1795237128">
 </head>
 <body>
-
-<!-- Boot screen: hides itself with CSS even if JS fails -->
-<div class="boot" id="boot" aria-hidden="true">
-  <div class="boot-inner">
-    <img src="assets/img/mark-reverse.png" alt="" class="boot-mark">
-    <p class="boot-line mono">SUTAKEM // SECURE LINK <span class="boot-ok">ESTABLISHED</span></p>
-    <div class="boot-bar"><span></span></div>
-  </div>
-</div>
-
-<div class="progress" id="progress" aria-hidden="true"></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -90,21 +79,16 @@
 <section class="hero" id="hero">
   <img src="assets/img/mark-reverse.png" alt="" class="hero-swirl" aria-hidden="true">
   <div class="hero-grid-bg" aria-hidden="true"></div>
-  <div class="reticle" id="reticle" aria-hidden="true">
-    <span class="r-box"></span>
-    <span class="r-read mono" id="reticleRead">TRK 000·000</span>
-  </div>
-
   <div class="wrap hero-inner">
     <div class="hero-copy">
-      <p class="kicker mono"><i class="rec"></i> CCTV &nbsp;·&nbsp; ACCESS CONTROL &nbsp;·&nbsp; ELECTRIC FENCING &nbsp;·&nbsp; NETWORKS &nbsp;·&nbsp; eTIMS</p>
+      <p class="kicker">Security systems installer &nbsp;·&nbsp; Kenya</p>
       <h1 class="hero-title">
         <span class="line"><span>Safeguard</span></span>
         <span class="line"><span>what</span></span>
         <span class="line"><span><em>matters</em></span></span>
         <span class="line"><span><em>most.</em></span></span>
       </h1>
-      <p class="lede">We design, install and look after security systems for homes, offices, schools and shops across Kenya. You deal with one team, from the first site visit to every support call after.</p>
+      <p class="lede">We design, install and look after security systems for homes, offices, schools and shops across Kenya. Free site visit, clear written quote, neat installation.</p>
       <div class="hero-ctas">
         <a href="#survey" class="btn btn-gold">Book a free site visit <svg class="ic"><use href="#i-arrow"/></svg></a>
         <a href="https://wa.me/254790444921?text=Hello%20Sutakem%2C%20I%27d%20like%20to%20talk%20about%20security%20for%20my%20site." class="btn btn-ghost" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg> WhatsApp us</a>
@@ -176,7 +160,7 @@
 <section class="section layers" id="services">
   <div class="wrap">
     <div class="head reveal">
-      <p class="eyebrow mono">// what we do</p>
+      <p class="eyebrow">What we do</p>
       <h2>Protection that works <em>in layers.</em></h2>
       <p class="sub">Good security starts at your fence and works inward. Pick a layer to see what we install there and why it matters.</p>
     </div>
@@ -224,8 +208,8 @@
 <section class="section setup" id="setup">
   <div class="wrap">
     <div class="head reveal">
-      <p class="eyebrow mono">// not sure where to start?</p>
-      <h2>Find your setup <em>in three taps.</em></h2>
+      <p class="eyebrow">Not sure where to start?</p>
+      <h2>Find your setup <em>in three questions.</em></h2>
       <p class="sub">Every site is different, so we never guess camera counts online. Answer three quick questions and we will show you where to start. Everything gets confirmed on a free site visit.</p>
     </div>
 
@@ -298,7 +282,7 @@
 <section class="section etims" id="etims">
   <div class="wrap etims-grid">
     <div class="etims-copy reveal">
-      <p class="eyebrow mono">// for shops &amp; businesses · eTIMS &amp; ETR</p>
+      <p class="eyebrow">For shops &amp; businesses</p>
       <h2>Keep your ETR working <em>and your eTIMS compliant.</em></h2>
       <p class="sub">When your ETR is down, you cannot issue compliant receipts. We repair the machines Kenyan businesses actually use, install and integrate eTIMS, and connect it to your accounting software so every sale reports correctly.</p>
 
@@ -347,7 +331,7 @@
   <div class="wrap">
     <div class="head head-split reveal">
       <div>
-        <p class="eyebrow mono">// our work</p>
+        <p class="eyebrow">Our work</p>
         <h2>Real sites. <em>Real feeds.</em></h2>
       </div>
       <p class="sub">Systems we installed, photographed on site. No stock photos in this section. Tap a photo to see it full size.</p>
@@ -395,7 +379,7 @@
 <section class="section voices" id="voices" hidden>
   <div class="wrap">
     <div class="head reveal">
-      <p class="eyebrow mono">// in their words</p>
+      <p class="eyebrow">In their words</p>
       <h2>Trusted by people <em>who checked.</em></h2>
     </div>
     <div class="voice-grid" id="voiceGrid"></div>
@@ -406,7 +390,7 @@
 <!-- ============ STATEMENT ============ -->
 <section class="statement" id="statement" aria-label="How we work">
   <div class="wrap">
-    <p class="statement-text" id="statementText">We visit before we quote. We cable neatly and test every camera before we leave. And when something stops working, you call the same team that installed it.</p>
+    <p class="statement-text" id="statementText">The people who install your system are the people who answer when you call. Day or night.</p>
   </div>
 </section>
 
@@ -414,7 +398,7 @@
 <section class="section survey" id="survey">
   <div class="wrap">
     <div class="head reveal">
-      <p class="eyebrow mono">// book a visit</p>
+      <p class="eyebrow">Book a visit</p>
       <h2>Book your <em>free site visit.</em></h2>
       <p class="sub">Tell us what you need. Your request opens in WhatsApp or email, ready to send.</p>
     </div>
@@ -482,7 +466,7 @@
 <section class="section faq" id="faq">
   <div class="wrap faq-grid">
     <div class="head head-left reveal">
-      <p class="eyebrow mono">// questions</p>
+      <p class="eyebrow">Questions</p>
       <h2>Straight <em>answers.</em></h2>
       <p class="sub">Anything else? Call <a href="tel:+254790444921">0790 444 921</a>.</p>
     </div>
@@ -537,7 +521,7 @@
 <a class="wa-fab" href="https://wa.me/254790444921" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg class="ic"><use href="#i-chat"/></svg><span>Chat with us</span></a>
 
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js" defer></script>
-<script src="facts.js" defer></script>
-<script src="app.js" defer></script>
+<script src="facts.js?v=1795237128" defer></script>
+<script src="app.js?v=1795237128" defer></script>
 </body>
 </html>

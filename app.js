@@ -12,16 +12,8 @@
   const lerp = (a, b, t) => a + (b - a) * t;
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const waLink = text => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
   const FACTS = window.SUTAKEM_FACTS || {};
-
-  /* ---------- boot: full sequence once per session ---------- */
-  const boot = $('#boot');
-  let seen = false;
-  try { seen = sessionStorage.getItem('sut-boot') === '1'; sessionStorage.setItem('sut-boot', '1'); } catch (e) { /* storage blocked */ }
-  if (seen || reduced) { document.documentElement.classList.add('quick'); boot.classList.add('skip'); }
-  setTimeout(() => boot.remove(), 2200);
 
   /* ---------- smooth scroll (Lenis), with plain-scroll fallback ---------- */
   let lenis = null;
@@ -142,7 +134,7 @@
 
   /* ---------- statement words ---------- */
   const stText = $('#statementText');
-  const goldWords = new Set(['visit', 'quote.', 'test', 'same', 'team']);
+  const goldWords = new Set(['install', 'answer', 'Day', 'night.']);
   stText.innerHTML = stText.textContent.trim().split(/\s+/)
     .map(w => `<span class="w${goldWords.has(w) ? ' gold' : ''}">${w}</span>`).join(' ');
   const words = $$('.w', stText);
@@ -205,27 +197,7 @@
     setTimeout(() => f.el.classList.remove('cut'), 480);
   }, 2600);
 
-  /* ---------- hero: tracking reticle + feed tilt ---------- */
-  const reticle = $('#reticle');
-  const read = $('#reticleRead');
   const nvr = $('.nvr');
-  $('.feed-main').insertAdjacentHTML('beforeend', '<span class="scan" aria-hidden="true"></span>');
-  if (canHover && !reduced) {
-    let raf = 0, px = 0, py = 0;
-    hero.addEventListener('pointermove', e => {
-      const r = hero.getBoundingClientRect();
-      px = e.clientX - r.left; py = e.clientY - r.top;
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        reticle.style.transform = `translate(${px}px, ${py}px)`;
-        read.textContent = `TRK ${String(Math.round(px)).padStart(3, '0')}·${String(Math.round(py)).padStart(3, '0')}`;
-        nvr.style.setProperty('--ry', `${-8 + (px / r.width - 0.5) * 10}deg`);
-        nvr.style.setProperty('--rx', `${4 - (py / r.height - 0.5) * 8}deg`);
-      });
-    });
-    hero.addEventListener('pointerleave', () => { nvr.style.setProperty('--ry', '-8deg'); nvr.style.setProperty('--rx', '4deg'); });
-  }
 
   /* ==========================================================================
      LAYERS OF PROTECTION
@@ -237,7 +209,7 @@
     { key: 'Entry', img: 'access.jpg', title: 'Decide who gets in.',
       why: 'Fingerprint, card or code at the door, an intercom at the gate, and a record of who came in and when.',
       items: ['Access control systems', 'Intercom systems', 'Biometric time & attendance for staff'] },
-    { key: 'Watch', img: 'hero-feed.jpg', title: 'See everything, from anywhere.',
+    { key: 'Watch', img: 'site-office.jpg', title: 'See everything, from anywhere.',
       why: 'HD and IP cameras recording around the clock, and you can watch them live from your phone.',
       items: ['HD & IP CCTV installation', '24/7 recording', 'Remote viewing on your phone'] },
     { key: 'Connect', img: 'network.jpg', title: 'A network that just works.',
@@ -439,29 +411,9 @@
     return { select, setSetup(text) { setupText = text; sync(); } };
   })();
 
-  /* ---------- cursor light on panels, magnetic gold buttons ---------- */
-  if (canHover && !reduced) {
-    $$('.layer-panel, .wizard, .survey-form, .contact-tile, .voice, .note').forEach(el => {
-      el.insertAdjacentHTML('afterbegin', '<span class="glow" aria-hidden="true"></span>');
-      el.addEventListener('pointermove', e => {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty('--mx', `${e.clientX - r.left}px`);
-        el.style.setProperty('--my', `${e.clientY - r.top}px`);
-      });
-    });
-    $$('.btn-gold, .wa-fab').forEach(b => {
-      b.addEventListener('pointermove', e => {
-        const r = b.getBoundingClientRect();
-        b.style.translate = `${(e.clientX - r.left - r.width / 2) * 0.22}px ${(e.clientY - r.top - r.height / 2) * 0.32}px`;
-      });
-      b.addEventListener('pointerleave', () => { b.style.translate = ''; });
-    });
-  }
-
   /* ==========================================================================
      THE LOOP: everything tied to scroll position, scroll speed or time
      ========================================================================== */
-  const progress = $('#progress');
   const fab = $('.wa-fab');
   const heroCopy = $('.hero-copy');
   const swirl = $('.hero-swirl');
@@ -482,8 +434,6 @@
     lastY = y;
 
     header.classList.toggle('scrolled', y > 20);
-    const max = document.documentElement.scrollHeight - vh;
-    progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
     fab.classList.toggle('show', y > hero.offsetHeight * 0.7);
 
     if (!reduced) {

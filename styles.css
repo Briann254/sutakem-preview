@@ -15,7 +15,7 @@
   --ice: #EEF1F8;
   --champagne: #F2DFA9;
   --mist: #9AA7C7;
-  --dim: #5F6D8F;
+  --dim: #8391B5;
   --line: rgba(232, 181, 58, .16);
   --line-2: rgba(236, 241, 255, .09);
   --rec: #FF3B3B;
@@ -31,7 +31,7 @@
   --r-sm: 10px;
   --ease: cubic-bezier(.2, .7, .1, 1);
   --header-h: 84px;
-  --boot: 1.45s;
+  --boot: 0s;
 }
 html.quick { --boot: 0s; }
 
@@ -89,26 +89,6 @@ body::after {
 .btn-ink:hover { box-shadow: 0 14px 30px -10px rgba(11, 20, 48, .6); }
 .btn-sm { padding: .75em 1.2em; font-size: .78rem; }
 .btn-block { width: 100%; white-space: normal; text-align: center; }
-
-/* ---------- boot screen ---------- */
-.boot {
-  position: fixed; inset: 0; z-index: 300; background: var(--night);
-  display: grid; place-items: center;
-  animation: bootOut .5s 1.5s var(--ease) forwards;
-}
-.boot.skip { display: none; }
-.boot-inner { display: grid; justify-items: center; gap: 18px; }
-.boot-mark { width: 84px; animation: bootSpin 1.4s var(--ease) both; }
-.boot-line { font-size: .72rem; color: var(--mist); }
-.boot-ok { color: var(--gold); animation: blinkIn .2s 1s both; }
-.boot-bar { width: 200px; height: 2px; background: var(--line-2); overflow: hidden; border-radius: 2px; }
-.boot-bar span { display: block; height: 100%; background: var(--gold); transform-origin: left; animation: bootBar 1.2s var(--ease) both; }
-@keyframes bootSpin { from { transform: rotate(-200deg) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes bootBar { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes blinkIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes bootOut { to { opacity: 0; visibility: hidden; } }
-
-.progress { position: fixed; top: 0; left: 0; height: 2px; width: 100%; z-index: 120; background: var(--gold); transform-origin: left; transform: scaleX(0); }
 
 /* ---------- header: floating island nav ---------- */
 .site-header { position: fixed; inset: 0 0 auto; z-index: 100; height: var(--header-h); transition: background .4s, border-color .4s, height .4s var(--ease); border-bottom: 1px solid transparent; }
@@ -239,8 +219,6 @@ body::after {
 }
 .feed figcaption { position: absolute; left: 12px; bottom: 10px; z-index: 3; font-size: .6rem; color: #fff; background: rgba(6, 13, 31, .65); padding: 4px 8px; border-radius: 4px; backdrop-filter: blur(4px); }
 .feed-tag { position: absolute; right: 12px; top: 10px; z-index: 3; font-size: .58rem; color: var(--gold-hi); background: rgba(6, 13, 31, .6); padding: 3px 7px; border-radius: 4px; }
-.feed-main .scan { position: absolute; left: 0; right: 0; height: 30%; z-index: 1; background: linear-gradient(180deg, transparent, rgba(232, 181, 58, .10), transparent); animation: scan 4.5s linear infinite; pointer-events: none; }
-@keyframes scan { from { top: -30%; } to { top: 100%; } }
 .feed-badge {
   position: absolute; left: -28px; bottom: -26px; display: flex; align-items: center; gap: 12px;
   padding: 12px 18px 12px 12px; border-radius: 16px;
@@ -252,15 +230,6 @@ body::after {
 .feed-badge b { display: block; font-size: .85rem; }
 .feed-badge span { font-size: .75rem; color: var(--mist); }
 
-/* reticle */
-.reticle { position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity .3s; will-change: transform; }
-.hero:hover .reticle { opacity: 1; }
-.r-box { position: absolute; width: 64px; height: 64px; left: -32px; top: -32px; border: 1px solid rgba(232, 181, 58, .7); border-radius: 4px; }
-.r-box::before, .r-box::after { content: ""; position: absolute; background: var(--gold); }
-.r-box::before { width: 1px; height: 14px; left: 50%; top: 50%; translate: 0 -50%; }
-.r-box::after { height: 1px; width: 14px; top: 50%; left: 50%; translate: -50% 0; }
-.r-read { position: absolute; left: 40px; top: 22px; font-size: .58rem; color: var(--gold-hi); white-space: nowrap; }
-@media (hover: none) { .reticle { display: none; } }
 
 .scroll-cue { position: absolute; left: 50%; bottom: 26px; translate: -50% 0; display: grid; justify-items: center; gap: 8px; font-size: .6rem; color: var(--dim); text-decoration: none; }
 .scroll-cue span { width: 1px; height: 40px; background: linear-gradient(var(--gold), transparent); animation: cue 2s var(--ease) infinite; transform-origin: top; }
@@ -472,11 +441,6 @@ html.lenis, html.lenis body { height: auto; }
 }
 @keyframes noiseFlash { 0%, 100% { opacity: 1; } 50% { opacity: .2; } }
 
-/* cursor light */
-.glow { position: absolute; inset: 0; z-index: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(232, 181, 58, .11), transparent 45%); }
-.layer-panel, .wizard, .survey-form, .contact-tile, .voice, .note { position: relative; }
-:is(.layer-panel, .wizard, .survey-form, .contact-tile, .voice, .note):hover > .glow { opacity: 1; }
-.layer-panel > :not(.glow), .wizard > :not(.glow), .survey-form > :not(.glow), .contact-tile > :not(.glow), .note > :not(.glow) { position: relative; z-index: 1; }
 
 /* hero shimmer on the gold words, slow and continuous */
 .hero-title em { background-size: 220% 100%; animation: shimmer 7s ease-in-out infinite; }
@@ -678,7 +642,6 @@ html.lenis, html.lenis body { height: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
-  .boot { display: none; }
   .hero-title .line > span, .nvr, .feed-badge, .hero-copy > * { transform: none !important; opacity: 1 !important; animation: none !important; }
   .reveal { opacity: 1; transform: none; }
   .receipt { clip-path: none; }
@@ -714,7 +677,27 @@ html.lenis, html.lenis body { height: auto; }
 .work::after, .faq::after, .statement::after, .proofband::after { background: url("assets/img/guilloche-wave.svg") repeat 0 0 / 240px 120px; }
 .statement::after { opacity: .7; -webkit-mask-image: radial-gradient(70% 60% at 50% 50%, #000, transparent); mask-image: radial-gradient(70% 60% at 50% 50%, #000, transparent); }
 .proofband::after { -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
-/* slow drift so the engraving feels alive, not printed on */
-.layers::after, .setup::after, .survey::after { animation: engrave 24s ease-in-out infinite; }
-@keyframes engrave { 50% { transform: translateY(-18px) scale(1.02); } }
-@media (prefers-reduced-motion: reduce) { .layers::after, .setup::after, .survey::after { animation: none; } }
+
+/* ==========================================================================
+   v5 · AUDIT FIXES: calmer labels, readable sizes, less noise
+   ========================================================================== */
+.eyebrow { display: inline-flex; align-items: center; gap: 12px; font-family: var(--f-body); font-weight: 700; font-size: .76rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
+.eyebrow::before, .head:not(.head-left):not(.head-split) .eyebrow::after { content: ""; width: 28px; height: 1.5px; background: currentColor; opacity: .7; }
+.etims .eyebrow { color: var(--gold-lo); }
+.kicker { font-family: var(--f-body); font-weight: 700; font-size: .76rem; letter-spacing: .2em; text-transform: uppercase; color: var(--mist); }
+.kicker::before { content: ""; width: 28px; height: 1.5px; background: var(--gold); }
+
+/* nothing a visitor needs to read goes below ~10.5px */
+.feed figcaption, .nvr-top, .nvr-bottom { font-size: .66rem; }
+.feed-tag { font-size: .64rem; }
+.p-hud, .ld-img span, .note-tags, .layer-tabs button span { font-size: .68rem; }
+.wz-count, .t-label { font-size: .72rem; }
+.brand-word small { font-size: .56rem; }
+.foot-bar p { font-size: .72rem; }
+.field em { color: var(--mist); }
+@media (max-width: 600px) {
+  .layer-tabs button { font-size: .74rem; }
+  .ring-labels { display: none; }
+  .kicker { font-size: .7rem; letter-spacing: .16em; }
+}
+.contact-tile small { font-size: .68rem; letter-spacing: .08em; }
