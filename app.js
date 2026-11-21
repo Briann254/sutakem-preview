@@ -1,4 +1,6 @@
-/* Sutakem Solutions · site behaviour. No dependencies. */
+/* Sutakem Solutions · site behaviour.
+   One animation loop drives everything scroll-linked, so the page keeps
+   moving in both directions instead of animating once and going still. */
 (() => {
   'use strict';
 
@@ -7,33 +9,36 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const waLink = text => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+  const FACTS = window.SUTAKEM_FACTS || {};
 
   /* ---------- boot: full sequence once per session ---------- */
   const boot = $('#boot');
   let seen = false;
   try { seen = sessionStorage.getItem('sut-boot') === '1'; sessionStorage.setItem('sut-boot', '1'); } catch (e) { /* storage blocked */ }
-  if (seen || reduced) {
-    document.documentElement.classList.add('quick');
-    boot.classList.add('skip');
-  }
+  if (seen || reduced) { document.documentElement.classList.add('quick'); boot.classList.add('skip'); }
   setTimeout(() => boot.remove(), 2200);
 
-  /* ---------- header, progress bar, floating CTA ---------- */
+  /* ---------- smooth scroll (Lenis), with plain-scroll fallback ---------- */
+  let lenis = null;
+  if (!reduced && window.Lenis) {
+    lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true, wheelMultiplier: 1 });
+  }
   const header = $('.site-header');
-  const progress = $('#progress');
-  const fab = $('.wa-fab');
-  const hero = $('#hero');
-  const onScroll = () => {
-    const y = scrollY;
-    header.classList.toggle('scrolled', y > 20);
-    const max = document.documentElement.scrollHeight - innerHeight;
-    progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
-    fab.classList.toggle('show', y > hero.offsetHeight * 0.7);
-    statementTick();
-    stepsTick();
-  };
+  const headerH = () => header.offsetHeight;
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    const id = a.getAttribute('href');
+    const target = id === '#top' || id === '#' ? document.body : document.querySelector(id);
+    if (!target) return;
+    e.preventDefault();
+    if (lenis) lenis.scrollTo(target === document.body ? 0 : target, { offset: -headerH() - 8, duration: 1.4 });
+    else (target === document.body ? scrollTo({ top: 0 }) : target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }));
+  });
 
   /* ---------- mobile menu ---------- */
   const menuBtn = $('#menuBtn');
@@ -42,6 +47,7 @@
     menuBtn.setAttribute('aria-expanded', String(open));
     navLinks.classList.toggle('open', open);
     header.classList.toggle('menu-open', open);
+    if (lenis) open ? lenis.stop() : lenis.start();
   };
   menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
   $$('a', navLinks).forEach(a => a.addEventListener('click', () => setMenu(false)));
@@ -58,17 +64,156 @@
   navMap.forEach((_, id) => { const s = document.getElementById(id); if (s) navIO.observe(s); });
 
   /* ---------- live clock, Nairobi time ---------- */
-  const clocks = $$('[data-clock]');
   const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  const tickClock = () => { const t = fmt.format(new Date()) + ' EAT'; clocks.forEach(c => (c.textContent = t)); };
+  const tickClock = () => { const t = fmt.format(new Date()) + ' EAT'; $$('[data-clock]').forEach(c => (c.textContent = t)); };
   tickClock(); setInterval(tickClock, 1000);
 
+  /* ---------- facts.js: real proof, rendered only when present ---------- */
+  /**
+   * Decide which four items the proof band under the hero shows.
+   * `defaults` are true today (read from the client's own install photos);
+   * `facts` are the client's confirmed numbers (null until he sends them).
+   * Return up to 4 items: { value: string, count?: number, label: string }.
+   */
+  function buildProofItems(facts, defaults) {
+    // TODO(human): choose how confirmed numbers replace the photo-based defaults.
+    // Current behaviour: confirmed numbers first, then defaults, capped at four.
+    const real = [];
+    if (facts.yearsInBusiness) real.push({ value: `${facts.yearsInBusiness}+`, count: facts.yearsInBusiness, label: 'years installing security across Kenya' });
+    if (facts.sitesInstalled) real.push({ value: `${facts.sitesInstalled}+`, count: facts.sitesInstalled, label: 'homes, offices, schools and shops secured' });
+    if (facts.camerasInstalled) real.push({ value: `${facts.camerasInstalled}+`, count: facts.camerasInstalled, label: 'cameras installed and supported' });
+    return [...real, ...defaults].slice(0, 4);
+  }
+
+  const band = $('#proofBand');
+  const defaults = $$('.pb', band).map(pb => {
+    const b = $('b', pb);
+    return { value: b.textContent, count: b.dataset.count ? +b.dataset.count : undefined, label: $('span', pb).textContent };
+  });
+  const items = buildProofItems(FACTS, defaults);
+  band.innerHTML = items.map(it => `<div class="pb reveal"><b class="mono"${it.count ? ` data-count="${it.count}" data-suffix="${String(it.value).replace(/^[\d,]+/, '')}"` : ''}>${it.value}</b><span>${it.label}</span></div>`).join('');
+
+  if (FACTS.testimonials?.length || FACTS.clients?.length) {
+    const voices = $('#voices');
+    voices.hidden = false;
+    $('#voiceGrid').innerHTML = (FACTS.testimonials || []).map(t => {
+      const q = document.createElement('div'); q.textContent = t.quote;
+      const n = document.createElement('div'); n.textContent = t.name;
+      const r = document.createElement('div'); r.textContent = t.role || '';
+      return `<figure class="voice reveal"><blockquote>“${q.innerHTML}”</blockquote><figcaption><b>${n.innerHTML}</b><span>${r.innerHTML}</span></figcaption></figure>`;
+    }).join('');
+    if (FACTS.clients?.length) {
+      $('#clients').hidden = false;
+      const row = FACTS.clients.map(c => { const s = document.createElement('span'); s.textContent = c; return s.outerHTML + '<i>✦</i>'; }).join('');
+      $('#clientsTrack').innerHTML = row + row;
+    }
+  }
+  if (FACTS.brands?.length) {
+    const p = document.createElement('p');
+    p.className = 'brands mono reveal';
+    p.textContent = 'BRANDS WE INSTALL · ' + FACTS.brands.join(' · ').toUpperCase();
+    $('.channels').after(p);
+  }
+  const promises = [FACTS.responseTime, FACTS.warranty, ...(FACTS.compliance || [])].filter(Boolean);
+  if (promises.length) {
+    const g = $('#guarantees');
+    g.hidden = false;
+    g.innerHTML = '<p class="mono t-label">In writing</p><ul></ul>';
+    promises.forEach(t => { const li = document.createElement('li'); li.textContent = t; $('ul', g).append(li); });
+  }
+  const foot = [FACTS.location, FACTS.hours].filter(Boolean).join(' · ');
+  if (foot) $('#footFacts').textContent = ' · ' + foot.toUpperCase();
+
+  /* ---------- split section headings into words for a masked rise ---------- */
+  $$('.head h2, .foot-cta h2').forEach(h2 => {
+    let i = 0;
+    const wrapWords = (text, em) => text.split(/(\s+)/).map(part => {
+      if (!part.trim()) return part;
+      const inner = em ? `<em>${part}</em>` : part;
+      return `<span class="wd"><i style="--i:${i++}">${inner}</i></span>`;
+    }).join('');
+    h2.innerHTML = [...h2.childNodes].map(n => n.nodeType === 3 ? wrapWords(n.textContent, false) : wrapWords(n.textContent, true)).join('');
+  });
+
+  /* ---------- statement words ---------- */
+  const stText = $('#statementText');
+  const goldWords = new Set(['survey', 'quote.', 'test', 'same', 'team']);
+  stText.innerHTML = stText.textContent.trim().split(/\s+/)
+    .map(w => `<span class="w${goldWords.has(w) ? ' gold' : ''}">${w}</span>`).join(' ');
+  const words = $$('.w', stText);
+
+  /* ---------- reveals that replay: on when entering, reset when the element drops below the fold ---------- */
+  const countUp = el => {
+    const target = +el.dataset.count, suffix = el.dataset.suffix || '';
+    if (reduced) { el.textContent = target + suffix; return; }
+    const t0 = performance.now(), dur = 1400;
+    const step = now => {
+      const p = clamp((now - t0) / dur, 0, 1);
+      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
+      if (p < 1 && el.isConnected) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const revealIO = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        $$('[data-count]', e.target).forEach(countUp);
+      } else if (e.boundingClientRect.top > 0) {
+        e.target.classList.remove('in');
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+  $$('.reveal').forEach(el => {
+    const sibs = [...el.parentElement.children].filter(c => c.classList.contains('reveal'));
+    el.style.setProperty('--d', `${Math.min(sibs.indexOf(el), 6) * 0.08}s`);
+    revealIO.observe(el);
+  });
+  const replayIO = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.classList.add('in');
+      else if (e.boundingClientRect.top > 0) e.target.classList.remove('in');
+    });
+  }, { threshold: 0.35 });
+  ['#receiptZone', '#race'].forEach(s => replayIO.observe($(s)));
+
+  /* ---------- hero feeds keep cutting between cameras, like a real NVR ---------- */
+  const POOL = [
+    { src: 'hero-feed.jpg', cap: 'CAM 01 · PERIMETER', alt: 'Dome CCTV camera with live views on a laptop and phone' },
+    { src: 'access.jpg', cap: 'CAM 02 · ACCESS', alt: 'Fingerprint access control reader at an office door' },
+    { src: 'network.jpg', cap: 'CAM 03 · SERVER ROOM', alt: 'Network switch with neatly patched cables' },
+    { src: 'cctv.jpg', cap: 'CAM 04 · FRONT WALL', alt: 'Twin outdoor cameras on a house wall' },
+    { src: 'site-school.jpg', cap: 'CAM 05 · CAMPUS WALL', alt: 'Sixteen-camera wall covering a school campus' },
+    { src: 'etims.jpg', cap: 'CAM 06 · TILL', alt: 'ETR and eTIMS devices at a till' },
+    { src: 'site-office.jpg', cap: 'CAM 07 · RECEPTION', alt: 'Office CCTV monitor showing reception' }
+  ];
+  POOL.forEach(p => { const i = new Image(); i.src = `assets/img/${p.src}`; });
+  const feeds = $$('[data-feed]').map(f => ({ el: f, img: $('img', f), cap: $('figcaption', f), cur: +f.dataset.feed }));
+  let heroVisible = true;
+  new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; }).observe($('#hero'));
+  let cutTurn = 0;
+  if (!reduced) setInterval(() => {
+    if (!heroVisible || document.hidden) return;
+    const order = [1, 2, 1, 2, 0];
+    const f = feeds[order[cutTurn++ % order.length]];
+    const used = new Set(feeds.map(x => x.cur));
+    let next = (f.cur + 1) % POOL.length;
+    while (used.has(next)) next = (next + 1) % POOL.length;
+    f.el.classList.add('cut');
+    setTimeout(() => {
+      const p = POOL[next];
+      f.img.src = `assets/img/${p.src}`; f.img.alt = p.alt; f.cap.textContent = p.cap; f.cur = next;
+    }, 160);
+    setTimeout(() => f.el.classList.remove('cut'), 480);
+  }, 2600);
+
   /* ---------- hero: tracking reticle + feed tilt ---------- */
+  const hero = $('#hero');
   const reticle = $('#reticle');
   const read = $('#reticleRead');
   const nvr = $('.nvr');
   $('.feed-main').insertAdjacentHTML('beforeend', '<span class="scan" aria-hidden="true"></span>');
-  if (matchMedia('(hover: hover)').matches && !reduced) {
+  if (canHover && !reduced) {
     let raf = 0, px = 0, py = 0;
     hero.addEventListener('pointermove', e => {
       const r = hero.getBoundingClientRect();
@@ -86,34 +231,39 @@
     hero.addEventListener('pointerleave', () => { nvr.style.setProperty('--ry', '-8deg'); nvr.style.setProperty('--rx', '4deg'); });
   }
 
-  /* ---------- reveal on scroll, staggered within a parent ---------- */
-  const revealIO = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (!e.isIntersecting) return;
-      e.target.classList.add('in');
-      revealIO.unobserve(e.target);
+  /* ---------- cursor light on panels, tilt on channels, magnetic CTAs ---------- */
+  if (canHover && !reduced) {
+    $$('.panel, .planner-panel, .planner-stage, .survey-form, .contact-tile, .sector-grid li, .voice').forEach(el => {
+      el.insertAdjacentHTML('afterbegin', '<span class="glow" aria-hidden="true"></span>');
+      el.addEventListener('pointermove', e => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+        el.style.setProperty('--my', `${e.clientY - r.top}px`);
+      });
     });
-  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
-  $$('.reveal').forEach(el => {
-    const sibs = [...el.parentElement.children].filter(c => c.classList.contains('reveal'));
-    el.style.setProperty('--d', `${Math.min(sibs.indexOf(el), 6) * 0.08}s`);
-    revealIO.observe(el);
-  });
-
-  // one-shot "in" for the printing receipt and the SSD race
-  const onceIO = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); onceIO.unobserve(e.target); } });
-  }, { threshold: 0.35 });
-  ['#receiptZone', '#race'].forEach(s => onceIO.observe($(s)));
+    $$('.ch').forEach(ch => {
+      ch.addEventListener('pointermove', e => {
+        const r = ch.getBoundingClientRect();
+        const dx = (e.clientX - r.left) / r.width - 0.5, dy = (e.clientY - r.top) / r.height - 0.5;
+        ch.style.setProperty('--ty', `${(dx * 7).toFixed(2)}deg`);
+        ch.style.setProperty('--tx', `${(-dy * 7).toFixed(2)}deg`);
+      });
+    });
+    $$('.btn-gold, .wa-fab').forEach(b => {
+      b.addEventListener('pointermove', e => {
+        const r = b.getBoundingClientRect();
+        b.style.translate = `${(e.clientX - r.left - r.width / 2) * 0.22}px ${(e.clientY - r.top - r.height / 2) * 0.32}px`;
+      });
+      b.addEventListener('pointerleave', () => { b.style.translate = ''; });
+    });
+  }
 
   /* ---------- service channels: tap to open on touch ---------- */
-  $$('.ch').forEach(ch => {
-    ch.addEventListener('click', () => {
-      const on = !ch.classList.contains('on');
-      $$('.ch').forEach(c => c.classList.remove('on'));
-      ch.classList.toggle('on', on);
-    });
-  });
+  $$('.ch').forEach(ch => ch.addEventListener('click', () => {
+    const on = !ch.classList.contains('on');
+    $$('.ch').forEach(c => c.classList.remove('on'));
+    ch.classList.toggle('on', on);
+  }));
 
   /* ---------- workbench tabs ---------- */
   $$('.tab').forEach(tab => tab.addEventListener('click', () => {
@@ -121,25 +271,91 @@
     $$('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab.dataset.tab));
   }));
 
-  /* ---------- statement: words light up as you scroll ---------- */
-  const stText = $('#statementText');
-  const goldWords = new Set(['Reliable', 'Professional', 'tailored', 'never', 'sleeps.']);
-  stText.innerHTML = stText.textContent.trim().split(/\s+/)
-    .map(w => `<span class="w${goldWords.has(w) ? ' gold' : ''}">${w}</span>`).join(' ');
-  const words = $$('.w', stText);
-  function statementTick() {
-    const r = stText.getBoundingClientRect();
-    const p = clamp((innerHeight * 0.85 - r.top) / (r.height + innerHeight * 0.35), 0, 1);
-    const lit = Math.round(p * words.length);
-    words.forEach((w, i) => w.classList.toggle('lit', i < lit));
-  }
+  /* ==========================================================================
+     THE LOOP: everything tied to scroll position or scroll speed
+     ========================================================================== */
+  const progress = $('#progress');
+  const fab = $('.wa-fab');
+  const heroCopy = $('.hero-copy');
+  const swirl = $('.hero-swirl');
+  const ticker = $('.ticker-track');
+  const steps = $$('.step');
+  const story = $('.story');
+  const svMedia = $$('.sv-media');
+  const svStep = $('#svStep');
+  const svBar = $('#svBar');
 
-  /* ---------- process line fills with scroll ---------- */
-  const steps = $('#steps');
-  function stepsTick() {
-    const r = steps.getBoundingClientRect();
-    steps.style.setProperty('--p', clamp((innerHeight * 0.75 - r.top) / (r.height + 120), 0, 1).toFixed(3));
+  // parallax: only elements currently on screen are measured each frame
+  const para = new Set();
+  const paraIO = new IntersectionObserver(es => es.forEach(e => (e.isIntersecting ? para.add(e.target) : para.delete(e.target))), { rootMargin: '10% 0px' });
+  $$('.proof-item img, .ch img, .sv-frame').forEach(el => { el.dataset.parallax ||= el.classList.contains('sv-frame') ? '0.06' : '0.12'; paraIO.observe(el); });
+
+  let tickX = 0, skew = 0, lastY = scrollY, activeStep = -1, tickHalf = 0;
+  const measureTicker = () => { tickHalf = ticker.scrollWidth / 2; };
+  measureTicker(); addEventListener('resize', measureTicker);
+
+  function frame(time) {
+    lenis?.raf(time);
+    const y = scrollY, vh = innerHeight;
+    const vel = lenis ? lenis.velocity : y - lastY;
+    lastY = y;
+
+    header.classList.toggle('scrolled', y > 20);
+    const max = document.documentElement.scrollHeight - vh;
+    progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+    fab.classList.toggle('show', y > hero.offsetHeight * 0.7);
+
+    if (!reduced) {
+      // ticker: always drifting, speeds up and leans with scroll velocity, reverses with direction
+      const dir = vel < -0.2 ? -1 : 1;
+      tickX -= (0.55 + Math.min(Math.abs(vel), 60) * 0.35) * dir;
+      if (tickHalf) { if (tickX <= -tickHalf) tickX += tickHalf; if (tickX > 0) tickX -= tickHalf; }
+      skew = lerp(skew, clamp(vel * -0.35, -10, 10), 0.12);
+      ticker.style.transform = `translate3d(${tickX}px,0,0) skewX(${skew.toFixed(2)}deg)`;
+
+      // hero drifts up and fades as you leave it; swirl turns with scroll
+      if (y < vh * 1.2) {
+        heroCopy.style.transform = `translate3d(0, ${y * 0.18}px, 0)`;
+        heroCopy.style.opacity = String(clamp(1 - y / (vh * 0.85), 0, 1));
+        nvr.parentElement.style.transform = `translate3d(0, ${y * 0.08}px, 0)`;
+      }
+      swirl.style.rotate = `${time * 0.006 + y * 0.08}deg`;
+
+      para.forEach(el => {
+        const box = el.parentElement.getBoundingClientRect();
+        const p = (box.top + box.height / 2 - vh / 2) / vh;
+        el.style.setProperty('--py', `${(-p * +el.dataset.parallax * box.height).toFixed(1)}px`);
+      });
+    }
+
+    // statement words light up with scroll
+    const sr = stText.getBoundingClientRect();
+    if (sr.top < vh && sr.bottom > 0) {
+      const lit = Math.round(clamp((vh * 0.85 - sr.top) / (sr.height + vh * 0.35), 0, 1) * words.length);
+      words.forEach((w, i) => w.classList.toggle('lit', i < lit));
+    }
+
+    // pinned process story: the step nearest the middle of the screen drives the viewer
+    const str = story.getBoundingClientRect();
+    if (str.top < vh && str.bottom > 0) {
+      let best = 0, bestD = Infinity;
+      steps.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        const d = Math.abs(r.top + r.height / 2 - vh / 2);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      if (best !== activeStep) {
+        activeStep = best;
+        steps.forEach((s, i) => s.classList.toggle('active', i === best));
+        svMedia.forEach((m, i) => m.classList.toggle('on', i === best));
+        svStep.textContent = String(best + 1).padStart(2, '0');
+      }
+      svBar.style.transform = `scaleX(${clamp((vh / 2 - str.top) / str.height, 0, 1).toFixed(3)})`;
+    }
+
+    requestAnimationFrame(frame);
   }
+  requestAnimationFrame(frame);
 
   /* ==========================================================================
      COVERAGE PLANNER
@@ -441,18 +657,15 @@
   /* ---------- lightbox ---------- */
   const lb = $('#lightbox'), lbImg = $('#lbImg');
   let lastFocus = null;
-  const closeLb = () => { lb.hidden = true; lastFocus?.focus(); };
+  const closeLb = () => { lb.hidden = true; lenis?.start(); lastFocus?.focus(); };
   $$('.proof-item').forEach(b => b.addEventListener('click', () => {
     lastFocus = b;
     const img = $('img', b);
     lbImg.src = b.dataset.full; lbImg.alt = img.alt;
-    lb.hidden = false; $('#lbClose').focus();
+    lb.hidden = false; lenis?.stop(); $('#lbClose').focus();
   }));
   lb.addEventListener('click', e => { if (e.target !== lbImg) closeLb(); });
   addEventListener('keydown', e => { if (e.key === 'Escape') { if (!lb.hidden) closeLb(); setMenu(false); } });
 
   $('#year').textContent = new Date().getFullYear();
-  addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', onScroll);
-  onScroll();
 })();
