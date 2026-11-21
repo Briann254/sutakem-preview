@@ -181,7 +181,7 @@
   const RANGE = 30;               // how far one camera usefully sees, in plan units
   const HALF_FOV = Math.PI / 4;   // 90° lens
   const STEP = 1.6;               // coverage sample spacing
-  const MAX_CAMS = 24;
+  const MAX_CAMS = 40;
   const NS = 'http://www.w3.org/2000/svg';
 
   const plan = $('#plan');
@@ -289,6 +289,7 @@
     $('#gFill').style.strokeDashoffset = String(314.16 * (1 - coverage / 100));
     $('#gFill').style.stroke = coverage >= 85 ? '#3BE38A' : coverage >= 60 ? '#E8B53A' : '#FF7A45';
     $('#roNote').textContent = !n ? 'Place your first camera on the plan.'
+      : rec?.custom ? 'Big site. We design systems this size on a free survey. Book it on WhatsApp below.'
       : coverage < 60 ? 'Big blind spots (red). Try entrances, corners and corridors.'
       : coverage < 85 ? 'Good start. A site survey usually finds the last blind spots.'
       : 'Strong coverage. Let us confirm it on site.';
@@ -313,12 +314,13 @@
    * Returns null for zero cameras, else { channels, label }.
    */
   function recommendRecorder(cameraCount) {
-    // TODO(human): decide Sutakem's sizing rule. This default picks the smallest
-    // standard size that fits, with no spare channels for adding cameras later.
+    // Sutakem rule: always leave at least 2 spare channels for future cameras.
+    // If no standard recorder can do that (31+ cameras), it's a custom design job.
+    const SPARE = 2;
     if (cameraCount === 0) return null;
-    const sizes = [4, 8, 16, 32];
-    const channels = sizes.find(s => s >= cameraCount) ?? 32;
-    return { channels, label: `${channels}-channel NVR` };
+    const channels = [4, 8, 16, 32].find(size => size - cameraCount >= SPARE);
+    if (!channels) return { channels: null, custom: true, label: 'Custom system' };
+    return { channels, label: `${channels}-channel NVR · ${channels - cameraCount} spare` };
   }
 
   // pointer: tap empty space to place, drag to aim, tap a camera to remove, drag a camera to re-aim
