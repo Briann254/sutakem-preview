@@ -309,10 +309,12 @@
    * Returns keys of RECS; they are shown in ORDER (outer layer first).
    */
   function recommendFor(place, worries, size) {
-    // TODO(human): Sutakem's own rules for what to suggest first.
-    // Default: map each worry to the services that answer it.
+    // Sutakem rules: shops always get eTIMS (it's a legal requirement), and homes
+    // with a compound (medium or large) always get an electric fence suggestion.
     const out = new Set();
-    const hasCompound = ['home', 'estate', 'warehouse', 'school'].includes(place);
+    if (place === 'shop') out.add('etims');
+    if (place === 'home' && size !== 'small') out.add('fence');
+    const hasCompound = ['estate', 'warehouse', 'school'].includes(place) || (place === 'home' && size !== 'small');
     if (worries.has('breakins')) { if (hasCompound) out.add('fence'); out.add('alarm'); out.add('cctv'); }
     if (worries.has('visitors')) { out.add(hasCompound && place !== 'school' ? 'intercom' : 'access'); out.add('cctv'); }
     if (worries.has('away')) out.add('cctv');

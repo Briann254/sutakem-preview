@@ -64,7 +64,7 @@ h2 em, h1 em { font-style: normal; color: var(--gold); }
 
 /* noise over everything, very faint: keeps flat navy from looking digital-cheap */
 body::after {
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 200; opacity: .05;
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 200; opacity: .06;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -686,3 +686,35 @@ html.lenis, html.lenis body { height: auto; }
   .clients-track, .sweep { animation: none; }
   .wd > i { transform: none !important; }
 }
+
+/* ==========================================================================
+   v4 · BRIGHTER BLUES + GUILLOCHE SECURITY-PRINT TEXTURE
+   Guilloche is the engraved line-work on banknotes and title deeds: the
+   oldest visual signal of "secure and valuable". Drawn as vector, so it is
+   sharp on any phone, and placed on a pseudo-element (no fixed backgrounds).
+   ========================================================================== */
+:root { --blue-glow: rgba(58, 108, 220, .40); }
+.layers { background: radial-gradient(55% 70% at 22% 45%, var(--blue-glow), transparent 70%), linear-gradient(180deg, #08132C 0%, #0E2148 100%); }
+.setup { background: radial-gradient(60% 55% at 50% 8%, rgba(66, 118, 230, .38), transparent 70%), linear-gradient(180deg, #0E2148 0%, #0A1836 100%); }
+.work { background: radial-gradient(50% 55% at 85% 12%, rgba(58, 108, 220, .30), transparent 70%), linear-gradient(180deg, #08132C 0%, #0C1C40 100%); }
+.survey { background: radial-gradient(70% 55% at 50% 0%, rgba(66, 118, 230, .42), transparent 70%), linear-gradient(180deg, #0C1C40 0%, #0A1734 100%); }
+.faq { background: linear-gradient(180deg, #0A1734 0%, #08132C 100%); }
+.proofband { background: linear-gradient(180deg, #060E20, #0A1734); }
+
+.layers, .setup, .work, .survey, .faq, .footer, .statement, .proofband { position: relative; isolation: isolate; }
+.layers::after, .setup::after, .work::after, .survey::after, .faq::after, .footer::after, .statement::after, .proofband::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(180deg, transparent, #000 14%, #000 86%, transparent);
+}
+.layers::after { background: url("assets/img/guilloche-rosette.svg") no-repeat 16% 58% / min(1150px, 170vw); }
+.setup::after { background: url("assets/img/guilloche-rosette.svg") no-repeat 50% 42% / min(1350px, 210vw); opacity: .85; }
+.survey::after { background: url("assets/img/guilloche-rosette.svg") no-repeat 92% 18% / min(1100px, 190vw); opacity: .8; }
+.footer::after { background: url("assets/img/guilloche-rosette.svg") no-repeat 50% 115% / min(1500px, 220vw); opacity: .7; }
+.work::after, .faq::after, .statement::after, .proofband::after { background: url("assets/img/guilloche-wave.svg") repeat 0 0 / 240px 120px; }
+.statement::after { opacity: .7; -webkit-mask-image: radial-gradient(70% 60% at 50% 50%, #000, transparent); mask-image: radial-gradient(70% 60% at 50% 50%, #000, transparent); }
+.proofband::after { -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
+/* slow drift so the engraving feels alive, not printed on */
+.layers::after, .setup::after, .survey::after { animation: engrave 24s ease-in-out infinite; }
+@keyframes engrave { 50% { transform: translateY(-18px) scale(1.02); } }
+@media (prefers-reduced-motion: reduce) { .layers::after, .setup::after, .survey::after { animation: none; } }
