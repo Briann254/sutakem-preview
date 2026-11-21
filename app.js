@@ -10,6 +10,7 @@
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const lerp = (a, b, t) => a + (b - a) * t;
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const waLink = text => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
@@ -24,87 +25,93 @@
 
   /* ---------- smooth scroll (Lenis), with plain-scroll fallback ---------- */
   let lenis = null;
-  if (!reduced && window.Lenis) {
-    lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true, wheelMultiplier: 1 });
-  }
+  if (!reduced && window.Lenis) lenis = new window.Lenis({ lerp: 0.09, smoothWheel: true });
   const header = $('.site-header');
-  const headerH = () => header.offsetHeight;
+  const goTo = target => {
+    const top = target === 'top';
+    if (lenis) lenis.scrollTo(top ? 0 : target, { offset: -header.offsetHeight - 8, duration: 1.4 });
+    else top ? scrollTo({ top: 0 }) : target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+  };
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#"]');
     if (!a) return;
     const id = a.getAttribute('href');
-    const target = id === '#top' || id === '#' ? document.body : document.querySelector(id);
+    const target = id === '#top' || id === '#' ? 'top' : document.querySelector(id);
     if (!target) return;
     e.preventDefault();
-    if (lenis) lenis.scrollTo(target === document.body ? 0 : target, { offset: -headerH() - 8, duration: 1.4 });
-    else (target === document.body ? scrollTo({ top: 0 }) : target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' }));
+    setMenu(false);
+    goTo(target);
   });
 
-  /* ---------- mobile menu ---------- */
+  /* ---------- full-screen menu (phones/tablets) ---------- */
   const menuBtn = $('#menuBtn');
-  const navLinks = $('#navLinks');
-  const setMenu = open => {
+  const sheet = $('#menuSheet');
+  function setMenu(open) {
     menuBtn.setAttribute('aria-expanded', String(open));
-    navLinks.classList.toggle('open', open);
-    header.classList.toggle('menu-open', open);
+    menuBtn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    sheet.setAttribute('aria-hidden', String(!open));
+    document.documentElement.classList.toggle('menu-open', open);
     if (lenis) open ? lenis.stop() : lenis.start();
-  };
+  }
   menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
-  $$('a', navLinks).forEach(a => a.addEventListener('click', () => setMenu(false)));
 
-  /* ---------- active nav link ---------- */
-  const navMap = new Map($$('.nav-links a[href^="#"]').map(a => [a.getAttribute('href').slice(1), a]));
+  /* ---------- floating nav: gold pill follows hover and the section in view ---------- */
+  const island = $('.island');
+  const pill = $('.island-pill');
+  const links = $$('a', island);
+  let activeLink = null;
+  const movePill = a => {
+    if (!a) { pill.style.opacity = '0'; return; }
+    pill.style.opacity = '1';
+    pill.style.width = `${a.offsetWidth}px`;
+    pill.style.transform = `translateX(${a.offsetLeft}px)`;
+  };
+  links.forEach(a => a.addEventListener('pointerenter', () => movePill(a)));
+  island.addEventListener('pointerleave', () => movePill(activeLink));
   const navIO = new IntersectionObserver(entries => {
     entries.forEach(e => {
-      if (!e.isIntersecting) return;
-      navMap.forEach(a => a.classList.remove('active'));
-      navMap.get(e.target.id)?.classList.add('active');
+      const a = links.find(l => l.getAttribute('href') === `#${e.target.id}`);
+      if (e.isIntersecting) activeLink = a;
+      else if (activeLink === a) activeLink = null;
+      links.forEach(l => l.classList.toggle('active', l === activeLink));
+      if (!island.matches(':hover')) movePill(activeLink);
     });
-  }, { rootMargin: '-45% 0px -50% 0px' });
-  navMap.forEach((_, id) => { const s = document.getElementById(id); if (s) navIO.observe(s); });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  links.forEach(a => { const s = document.querySelector(a.getAttribute('href')); if (s) navIO.observe(s); });
 
   /* ---------- live clock, Nairobi time ---------- */
   const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
   const tickClock = () => { const t = fmt.format(new Date()) + ' EAT'; $$('[data-clock]').forEach(c => (c.textContent = t)); };
   tickClock(); setInterval(tickClock, 1000);
 
-  /* ---------- facts.js: real proof, rendered only when present ---------- */
-  /**
-   * Decide which four items the proof band under the hero shows.
-   * `defaults` are true today (read from the client's own install photos);
-   * `facts` are the client's confirmed numbers (null until he sends them).
-   * Return up to 4 items: { value: string, count?: number, label: string }.
-   */
+  /* ==========================================================================
+     FACTS: real proof from facts.js, shown only when present
+     ========================================================================== */
+  // Sutakem rule: 24/7 support always shows; confirmed numbers replace the photo-based ones.
   function buildProofItems(facts, defaults) {
-    // TODO(human): choose how confirmed numbers replace the photo-based defaults.
-    // Current behaviour: confirmed numbers first, then defaults, capped at four.
+    const always = defaults.find(d => d.value === '24/7');
+    const photo = defaults.filter(d => d !== always);
     const real = [];
     if (facts.yearsInBusiness) real.push({ value: `${facts.yearsInBusiness}+`, count: facts.yearsInBusiness, label: 'years installing security across Kenya' });
     if (facts.sitesInstalled) real.push({ value: `${facts.sitesInstalled}+`, count: facts.sitesInstalled, label: 'homes, offices, schools and shops secured' });
     if (facts.camerasInstalled) real.push({ value: `${facts.camerasInstalled}+`, count: facts.camerasInstalled, label: 'cameras installed and supported' });
-    return [...real, ...defaults].slice(0, 4);
+    return [...real, ...photo].slice(0, 3).concat(always ? [always] : []);
   }
-
   const band = $('#proofBand');
   const defaults = $$('.pb', band).map(pb => {
     const b = $('b', pb);
     return { value: b.textContent, count: b.dataset.count ? +b.dataset.count : undefined, label: $('span', pb).textContent };
   });
-  const items = buildProofItems(FACTS, defaults);
-  band.innerHTML = items.map(it => `<div class="pb reveal"><b class="mono"${it.count ? ` data-count="${it.count}" data-suffix="${String(it.value).replace(/^[\d,]+/, '')}"` : ''}>${it.value}</b><span>${it.label}</span></div>`).join('');
+  band.innerHTML = buildProofItems(FACTS, defaults).map(it =>
+    `<div class="pb reveal"><b class="mono"${it.count ? ` data-count="${it.count}" data-suffix="${esc(String(it.value).replace(/^[\d,]+/, ''))}"` : ''}>${esc(it.value)}</b><span>${esc(it.label)}</span></div>`).join('');
 
   if (FACTS.testimonials?.length || FACTS.clients?.length) {
-    const voices = $('#voices');
-    voices.hidden = false;
-    $('#voiceGrid').innerHTML = (FACTS.testimonials || []).map(t => {
-      const q = document.createElement('div'); q.textContent = t.quote;
-      const n = document.createElement('div'); n.textContent = t.name;
-      const r = document.createElement('div'); r.textContent = t.role || '';
-      return `<figure class="voice reveal"><blockquote>“${q.innerHTML}”</blockquote><figcaption><b>${n.innerHTML}</b><span>${r.innerHTML}</span></figcaption></figure>`;
-    }).join('');
+    $('#voices').hidden = false;
+    $('#voiceGrid').innerHTML = (FACTS.testimonials || []).map(t =>
+      `<figure class="voice reveal"><blockquote>“${esc(t.quote)}”</blockquote><figcaption><b>${esc(t.name)}</b><span>${esc(t.role || '')}</span></figcaption></figure>`).join('');
     if (FACTS.clients?.length) {
       $('#clients').hidden = false;
-      const row = FACTS.clients.map(c => { const s = document.createElement('span'); s.textContent = c; return s.outerHTML + '<i>✦</i>'; }).join('');
+      const row = FACTS.clients.map(c => `<span>${esc(c)}</span><i>✦</i>`).join('');
       $('#clientsTrack').innerHTML = row + row;
     }
   }
@@ -112,14 +119,13 @@
     const p = document.createElement('p');
     p.className = 'brands mono reveal';
     p.textContent = 'BRANDS WE INSTALL · ' + FACTS.brands.join(' · ').toUpperCase();
-    $('.channels').after(p);
+    $('.layers-box').after(p);
   }
   const promises = [FACTS.responseTime, FACTS.warranty, ...(FACTS.compliance || [])].filter(Boolean);
   if (promises.length) {
     const g = $('#guarantees');
     g.hidden = false;
-    g.innerHTML = '<p class="mono t-label">In writing</p><ul></ul>';
-    promises.forEach(t => { const li = document.createElement('li'); li.textContent = t; $('ul', g).append(li); });
+    g.innerHTML = '<p class="mono t-label">In writing</p><ul>' + promises.map(t => `<li>${esc(t)}</li>`).join('') + '</ul>';
   }
   const foot = [FACTS.location, FACTS.hours].filter(Boolean).join(' · ');
   if (foot) $('#footFacts').textContent = ' · ' + foot.toUpperCase();
@@ -129,20 +135,19 @@
     let i = 0;
     const wrapWords = (text, em) => text.split(/(\s+)/).map(part => {
       if (!part.trim()) return part;
-      const inner = em ? `<em>${part}</em>` : part;
-      return `<span class="wd"><i style="--i:${i++}">${inner}</i></span>`;
+      return `<span class="wd"><i style="--i:${i++}">${em ? `<em>${part}</em>` : part}</i></span>`;
     }).join('');
-    h2.innerHTML = [...h2.childNodes].map(n => n.nodeType === 3 ? wrapWords(n.textContent, false) : wrapWords(n.textContent, true)).join('');
+    h2.innerHTML = [...h2.childNodes].map(n => wrapWords(n.textContent, n.nodeType !== 3)).join('');
   });
 
   /* ---------- statement words ---------- */
   const stText = $('#statementText');
-  const goldWords = new Set(['survey', 'quote.', 'test', 'same', 'team']);
+  const goldWords = new Set(['visit', 'quote.', 'test', 'same', 'team']);
   stText.innerHTML = stText.textContent.trim().split(/\s+/)
     .map(w => `<span class="w${goldWords.has(w) ? ' gold' : ''}">${w}</span>`).join(' ');
   const words = $$('.w', stText);
 
-  /* ---------- reveals that replay: on when entering, reset when the element drops below the fold ---------- */
+  /* ---------- reveals that replay when you scroll back down to them ---------- */
   const countUp = el => {
     const target = +el.dataset.count, suffix = el.dataset.suffix || '';
     if (reduced) { el.textContent = target + suffix; return; }
@@ -156,12 +161,8 @@
   };
   const revealIO = new IntersectionObserver(entries => {
     entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('in');
-        $$('[data-count]', e.target).forEach(countUp);
-      } else if (e.boundingClientRect.top > 0) {
-        e.target.classList.remove('in');
-      }
+      if (e.isIntersecting) { e.target.classList.add('in'); $$('[data-count]', e.target).forEach(countUp); }
+      else if (e.boundingClientRect.top > 0) e.target.classList.remove('in');
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
   $$('.reveal').forEach(el => {
@@ -175,7 +176,7 @@
       else if (e.boundingClientRect.top > 0) e.target.classList.remove('in');
     });
   }, { threshold: 0.35 });
-  ['#receiptZone', '#race'].forEach(s => replayIO.observe($(s)));
+  replayIO.observe($('#receiptZone'));
 
   /* ---------- hero feeds keep cutting between cameras, like a real NVR ---------- */
   const POOL = [
@@ -189,26 +190,22 @@
   ];
   POOL.forEach(p => { const i = new Image(); i.src = `assets/img/${p.src}`; });
   const feeds = $$('[data-feed]').map(f => ({ el: f, img: $('img', f), cap: $('figcaption', f), cur: +f.dataset.feed }));
+  const hero = $('#hero');
   let heroVisible = true;
-  new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; }).observe($('#hero'));
+  new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; }).observe(hero);
   let cutTurn = 0;
   if (!reduced) setInterval(() => {
     if (!heroVisible || document.hidden) return;
-    const order = [1, 2, 1, 2, 0];
-    const f = feeds[order[cutTurn++ % order.length]];
+    const f = feeds[[1, 2, 1, 2, 0][cutTurn++ % 5]];
     const used = new Set(feeds.map(x => x.cur));
     let next = (f.cur + 1) % POOL.length;
     while (used.has(next)) next = (next + 1) % POOL.length;
     f.el.classList.add('cut');
-    setTimeout(() => {
-      const p = POOL[next];
-      f.img.src = `assets/img/${p.src}`; f.img.alt = p.alt; f.cap.textContent = p.cap; f.cur = next;
-    }, 160);
+    setTimeout(() => { const p = POOL[next]; f.img.src = `assets/img/${p.src}`; f.img.alt = p.alt; f.cap.textContent = p.cap; f.cur = next; }, 160);
     setTimeout(() => f.el.classList.remove('cut'), 480);
   }, 2600);
 
   /* ---------- hero: tracking reticle + feed tilt ---------- */
-  const hero = $('#hero');
   const reticle = $('#reticle');
   const read = $('#reticleRead');
   const nvr = $('.nvr');
@@ -223,30 +220,231 @@
         raf = 0;
         reticle.style.transform = `translate(${px}px, ${py}px)`;
         read.textContent = `TRK ${String(Math.round(px)).padStart(3, '0')}·${String(Math.round(py)).padStart(3, '0')}`;
-        const dx = px / r.width - 0.5, dy = py / r.height - 0.5;
-        nvr.style.setProperty('--ry', `${-8 + dx * 10}deg`);
-        nvr.style.setProperty('--rx', `${4 - dy * 8}deg`);
+        nvr.style.setProperty('--ry', `${-8 + (px / r.width - 0.5) * 10}deg`);
+        nvr.style.setProperty('--rx', `${4 - (py / r.height - 0.5) * 8}deg`);
       });
     });
     hero.addEventListener('pointerleave', () => { nvr.style.setProperty('--ry', '-8deg'); nvr.style.setProperty('--rx', '4deg'); });
   }
 
-  /* ---------- cursor light on panels, tilt on channels, magnetic CTAs ---------- */
+  /* ==========================================================================
+     LAYERS OF PROTECTION
+     ========================================================================== */
+  const LAYERS = [
+    { key: 'Perimeter', img: 'cctv.jpg', title: 'Stop problems at the fence.',
+      why: 'Your first line of defence: a fence that deters, and an alarm that tells you the moment someone tries.',
+      items: ['Electric fence installation', 'Alarm systems', 'Perimeter cameras on walls and gates'] },
+    { key: 'Entry', img: 'access.jpg', title: 'Decide who gets in.',
+      why: 'Fingerprint, card or code at the door, an intercom at the gate, and a record of who came in and when.',
+      items: ['Access control systems', 'Intercom systems', 'Biometric time & attendance for staff'] },
+    { key: 'Watch', img: 'hero-feed.jpg', title: 'See everything, from anywhere.',
+      why: 'HD and IP cameras recording around the clock, and you can watch them live from your phone.',
+      items: ['HD & IP CCTV installation', '24/7 recording', 'Remote viewing on your phone'] },
+    { key: 'Connect', img: 'network.jpg', title: 'A network that just works.',
+      why: 'Cameras, door readers and your office all run on the network. We cable it neatly and set up WiFi that reaches every room.',
+      items: ['Structured cabling', 'WiFi installation & optimisation', 'Router & switch configuration', 'Office & home networking'] },
+    { key: 'Business', img: 'etims.jpg', title: 'Keep the business running.',
+      why: 'Compliant receipts on every sale, computers that work, and an office desk for the everyday jobs.',
+      items: ['eTIMS & ETR repair, installation and ERP integration', 'Laptop repairs and RAM, SSD & OS upgrades', 'Windows, MS Office & antivirus', 'Printing, card design, KRA & eCitizen services'] }
+  ];
+  LAYERS.forEach(l => { const i = new Image(); i.src = `assets/img/${l.img}`; });
+  const detail = $('#layerDetail');
+  const tabs = $$('#layerTabs button');
+  const rings = $$('.ring');
+  const timerBar = $('#layerTimer');
+  const LAYER_MS = 6000;
+  let layer = -1, layerAuto = !reduced, layerStart = performance.now(), layersVisible = false;
+
+  function showLayer(i) {
+    if (i === layer) return;
+    layer = i;
+    const L = LAYERS[i];
+    tabs.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; t.classList.toggle('on', k === i); });
+    rings.forEach((r, k) => { r.classList.toggle('on', k === i); r.classList.toggle('past', k < i); });
+    detail.classList.remove('swap'); void detail.offsetWidth; detail.classList.add('swap');
+    detail.innerHTML = `
+      <div class="ld-img"><img src="assets/img/${L.img}" alt=""><span class="mono">LAYER ${String(i + 1).padStart(2, '0')} · ${L.key.toUpperCase()}</span></div>
+      <div class="ld-body">
+        <h3>${L.title}</h3>
+        <p>${L.why}</p>
+        <ul>${L.items.map(x => `<li>${x}</li>`).join('')}</ul>
+        <a class="btn btn-line btn-sm" href="${waLink(`Hello Sutakem, I'd like to ask about ${L.key.toLowerCase()} security (${L.items[0]}).`)}" target="_blank" rel="noopener">Ask about this on WhatsApp</a>
+      </div>`;
+    layerStart = performance.now();
+  }
+  const pick = i => { layerAuto = false; timerBar.style.transform = 'scaleX(0)'; showLayer(i); };
+  tabs.forEach((t, i) => t.addEventListener('click', () => pick(i)));
+  rings.forEach(r => r.addEventListener('click', () => pick(+r.dataset.layer)));
+  $('#layerTabs').addEventListener('keydown', e => {
+    if (!['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(e.key)) return;
+    e.preventDefault();
+    const n = (layer + (e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1) + LAYERS.length) % LAYERS.length;
+    pick(n); tabs[n].focus();
+  });
+  new IntersectionObserver(([e]) => { layersVisible = e.isIntersecting; if (layersVisible) layerStart = performance.now(); }, { threshold: 0.3 }).observe($('.layers-box'));
+  showLayer(0);
+
+  /* ==========================================================================
+     FIND YOUR SETUP (3 questions, plain-language result, no fake numbers)
+     ========================================================================== */
+  const SIZES = { small: 'Small', medium: 'Medium', large: 'Large' };
+  const WORRIES = { breakins: 'Break-ins and theft', visitors: 'Who comes and goes', away: 'Seeing the place when away', staff: 'Staff attendance', wifi: 'Slow internet', etims: 'eTIMS compliance', computers: 'Failing computers' };
+  const RECS = {
+    fence: { name: 'Electric fence', chip: 'Electric fence', why: 'Stops intruders at the boundary, before they reach the building.' },
+    alarm: { name: 'Alarm system', chip: 'Alarm system', why: 'Alerts you the moment a door or window is forced.' },
+    access: { name: 'Access control at the main door', chip: 'Access control', why: 'Only the right people get in, with a record of when.' },
+    intercom: { name: 'Intercom at the gate', chip: 'Intercom & biometrics', why: 'See and talk to visitors before you open.' },
+    attendance: { name: 'Biometric time & attendance', chip: 'Intercom & biometrics', why: 'Staff clock in with a fingerprint, so timesheets are accurate.' },
+    cctv: { name: 'CCTV with phone viewing', chip: 'CCTV cameras', why: 'Covers entrances and key areas, records 24/7, and you can watch from your phone.' },
+    wifi: { name: 'WiFi and structured cabling', chip: 'Networking & WiFi', why: 'Reliable internet in every room, and the backbone cameras need.' },
+    etims: { name: 'eTIMS & ETR setup', chip: 'ETR / eTIMS', why: 'Compliant receipts on every sale, connected to your accounts.' },
+    it: { name: 'Computer repairs & upgrades', chip: 'Computer repairs & upgrades', why: 'Faster, dependable machines with SSD and RAM upgrades.' }
+  };
+  const ORDER = ['fence', 'alarm', 'access', 'intercom', 'attendance', 'cctv', 'wifi', 'etims', 'it'];
+
+  /**
+   * Turn the visitor's answers into a starting list of services.
+   * place: 'home' | 'office' | 'school' | 'shop' | 'estate' | 'warehouse'
+   * worries: Set of keys from WORRIES. size: 'small' | 'medium' | 'large'
+   * Returns keys of RECS; they are shown in ORDER (outer layer first).
+   */
+  function recommendFor(place, worries, size) {
+    // TODO(human): Sutakem's own rules for what to suggest first.
+    // Default: map each worry to the services that answer it.
+    const out = new Set();
+    const hasCompound = ['home', 'estate', 'warehouse', 'school'].includes(place);
+    if (worries.has('breakins')) { if (hasCompound) out.add('fence'); out.add('alarm'); out.add('cctv'); }
+    if (worries.has('visitors')) { out.add(hasCompound && place !== 'school' ? 'intercom' : 'access'); out.add('cctv'); }
+    if (worries.has('away')) out.add('cctv');
+    if (worries.has('staff')) out.add('attendance');
+    if (worries.has('wifi')) out.add('wifi');
+    if (worries.has('etims')) out.add('etims');
+    if (worries.has('computers')) out.add('it');
+    if (size === 'large' && out.has('cctv')) out.add('wifi');
+    return [...out];
+  }
+
+  function visitChecks(place, size) {
+    const byPlace = { home: 'Your gate, compound and doors', estate: 'Gates, common areas and parking', office: 'Reception, records and server rooms', school: 'Gates, classrooms, labs and the boundary', shop: 'Till, entrance and stock areas', warehouse: 'Loading bays, yard and boundary' };
+    const list = [byPlace[place], 'Where the recorder and screen should live', 'Power and internet points'];
+    if (size !== 'small') list.push('Cable routes between rooms and outside');
+    if (size === 'large') list.push('Distances and links between buildings', 'Dark areas that need night vision');
+    return list;
+  }
+
+  const wz = { step: 0, place: null, worries: new Set(), size: null };
+  const wzSteps = $$('.wz-step');
+  const wzNext = $('#wzNext'), wzBack = $('#wzBack');
+  const answered = s => (s === 0 ? !!wz.place : s === 1 ? wz.worries.size > 0 : s === 2 ? !!wz.size : true);
+  let autoTimer = 0;
+
+  function wzGo(s) {
+    clearTimeout(autoTimer);
+    wz.step = s;
+    wzSteps.forEach((el, i) => el.classList.toggle('active', i === s));
+    $('#wzBar').style.transform = `scaleX(${s / 3})`;
+    $('#wzCount').textContent = s < 3 ? `QUESTION ${s + 1} OF 3` : 'YOUR STARTING POINT';
+    wzBack.disabled = s === 0;
+    wzNext.disabled = !answered(s);
+    wzNext.hidden = s === 3;
+    wzNext.innerHTML = s === 2 ? 'See my setup <svg class="ic"><use href="#i-arrow"/></svg>' : 'Next <svg class="ic"><use href="#i-arrow"/></svg>';
+    if (s === 3) wzResult();
+  }
+  function wzResult() {
+    const keys = recommendFor(wz.place, wz.worries, wz.size);
+    const recs = ORDER.filter(k => keys.includes(k)).map(k => RECS[k]);
+    const placeName = wz.place;
+    $('#wzTag').textContent = `${SIZES[wz.size].toUpperCase()} ${placeName.toUpperCase()} · ${wz.worries.size} CONCERN${wz.worries.size === 1 ? '' : 'S'}`;
+    $('#wzTitle').textContent = recs.length ? `Where we would start for your ${placeName}` : 'Let us look at it together';
+    $('#wzRecs').innerHTML = recs.length
+      ? recs.map((r, i) => `<li style="--i:${i}"><b>${r.name}</b><span>${r.why}</span></li>`).join('')
+      : '<li><b>A free site visit</b><span>Tell us what is going on and we will suggest the right setup on site.</span></li>';
+    $('#wzChecks').innerHTML = visitChecks(wz.place, wz.size).map(c => `<li>${c}</li>`).join('');
+    const worryText = [...wz.worries].map(w => WORRIES[w]).join(', ');
+    const summary = `${SIZES[wz.size]} ${placeName} · concerns: ${worryText}${recs.length ? ` · suggested start: ${recs.map(r => r.name).join(', ')}` : ''}`;
+    $('#wzSend').href = waLink(`Hello Sutakem, I used "Find your setup" on your website.\n\nPlace: ${SIZES[wz.size]} ${placeName}\nConcerns: ${worryText}\n${recs.length ? `Suggested start: ${recs.map(r => r.name).join(', ')}\n` : ''}\nI'd like a free site visit.`);
+    $('#wzBook').onclick = () => { recs.forEach(r => survey.select(r.chip)); survey.setSetup(summary); };
+    $('#wzBar').style.transform = 'scaleX(1)';
+  }
+  $$('.wz-options').forEach(group => {
+    const q = group.dataset.q, many = group.dataset.mode === 'many';
+    $$('button', group).forEach(b => {
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => {
+        const v = b.dataset.val;
+        if (many) {
+          wz.worries.has(v) ? wz.worries.delete(v) : wz.worries.add(v);
+          b.classList.toggle('on', wz.worries.has(v));
+          b.setAttribute('aria-pressed', String(wz.worries.has(v)));
+          wzNext.disabled = !answered(wz.step);
+        } else {
+          wz[q] = v;
+          $$('button', group).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', String(x === b)); });
+          wzNext.disabled = false;
+          const from = wz.step;
+          autoTimer = setTimeout(() => { if (wz.step === from) wzGo(from + 1); }, 300);
+        }
+      });
+    });
+  });
+  wzNext.addEventListener('click', () => { if (answered(wz.step)) wzGo(wz.step + 1); });
+  wzBack.addEventListener('click', () => wzGo(Math.max(0, wz.step - 1)));
+
+  /* ==========================================================================
+     SITE VISIT REQUEST
+     ========================================================================== */
+  const survey = (() => {
+    const chosen = new Set();
+    const list = $('#ticketList');
+    const planLabel = $('#ticketPlanLabel'), planEl = $('#ticketPlan');
+    const d = new Date();
+    const ref = `SUT-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 900) + 100)}`;
+    $('#ticketRef').textContent = ref;
+    let setupText = '';
+    const val = id => $(id).value.trim();
+    const chips = $$('.chip');
+
+    function message() {
+      const lines = ['Hello Sutakem Solutions,', '', `I'd like to book a free site visit (ref ${ref}).`];
+      if (chosen.size) lines.push('', 'I need help with:', ...[...chosen].map(s => `- ${s}`));
+      if (setupText) lines.push('', `From "Find your setup": ${setupText}`);
+      const details = [['Name', val('#fName')], ['Phone', val('#fPhone')], ['Location', val('#fLoc')], ['Notes', val('#fMsg')]].filter(([, v]) => v);
+      if (details.length) lines.push('', ...details.map(([k, v]) => `${k}: ${v}`));
+      lines.push('', 'Thank you.');
+      return lines.join('\n');
+    }
+    function sync() {
+      list.innerHTML = chosen.size ? [...chosen].map(s => `<li>${esc(s)}</li>`).join('') : '<li class="empty">Nothing selected yet.</li>';
+      planLabel.hidden = planEl.hidden = !setupText;
+      planEl.textContent = setupText;
+      const msg = message();
+      $('#sendWa').href = waLink(msg);
+      $('#sendMail').href = `mailto:${EMAIL}?subject=${encodeURIComponent(`Free site visit request ${ref}`)}&body=${encodeURIComponent(msg)}`;
+    }
+    function toggle(chip, force) {
+      const v = chip.dataset.val;
+      const on = force ?? !chosen.has(v);
+      on ? chosen.add(v) : chosen.delete(v);
+      chip.classList.toggle('on', on);
+      chip.setAttribute('aria-pressed', String(on));
+      sync();
+    }
+    chips.forEach(c => { c.setAttribute('aria-pressed', 'false'); c.addEventListener('click', () => toggle(c)); });
+    ['#fName', '#fPhone', '#fLoc', '#fMsg'].forEach(id => $(id).addEventListener('input', sync));
+    const select = v => { const c = chips.find(x => x.dataset.val === v); if (c) toggle(c, true); };
+    $$('[data-preselect]').forEach(a => a.addEventListener('click', () => select(a.dataset.preselect)));
+    sync();
+    return { select, setSetup(text) { setupText = text; sync(); } };
+  })();
+
+  /* ---------- cursor light on panels, magnetic gold buttons ---------- */
   if (canHover && !reduced) {
-    $$('.panel, .planner-panel, .planner-stage, .survey-form, .contact-tile, .sector-grid li, .voice').forEach(el => {
+    $$('.layer-panel, .wizard, .survey-form, .contact-tile, .voice, .note').forEach(el => {
       el.insertAdjacentHTML('afterbegin', '<span class="glow" aria-hidden="true"></span>');
       el.addEventListener('pointermove', e => {
         const r = el.getBoundingClientRect();
         el.style.setProperty('--mx', `${e.clientX - r.left}px`);
         el.style.setProperty('--my', `${e.clientY - r.top}px`);
-      });
-    });
-    $$('.ch').forEach(ch => {
-      ch.addEventListener('pointermove', e => {
-        const r = ch.getBoundingClientRect();
-        const dx = (e.clientX - r.left) / r.width - 0.5, dy = (e.clientY - r.top) / r.height - 0.5;
-        ch.style.setProperty('--ty', `${(dx * 7).toFixed(2)}deg`);
-        ch.style.setProperty('--tx', `${(-dy * 7).toFixed(2)}deg`);
       });
     });
     $$('.btn-gold, .wa-fab').forEach(b => {
@@ -258,41 +456,22 @@
     });
   }
 
-  /* ---------- service channels: tap to open on touch ---------- */
-  $$('.ch').forEach(ch => ch.addEventListener('click', () => {
-    const on = !ch.classList.contains('on');
-    $$('.ch').forEach(c => c.classList.remove('on'));
-    ch.classList.toggle('on', on);
-  }));
-
-  /* ---------- workbench tabs ---------- */
-  $$('.tab').forEach(tab => tab.addEventListener('click', () => {
-    $$('.tab').forEach(t => { t.classList.toggle('active', t === tab); t.setAttribute('aria-selected', String(t === tab)); });
-    $$('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab.dataset.tab));
-  }));
-
   /* ==========================================================================
-     THE LOOP: everything tied to scroll position or scroll speed
+     THE LOOP: everything tied to scroll position, scroll speed or time
      ========================================================================== */
   const progress = $('#progress');
   const fab = $('.wa-fab');
   const heroCopy = $('.hero-copy');
   const swirl = $('.hero-swirl');
   const ticker = $('.ticker-track');
-  const steps = $$('.step');
-  const story = $('.story');
-  const svMedia = $$('.sv-media');
-  const svStep = $('#svStep');
-  const svBar = $('#svBar');
-
-  // parallax: only elements currently on screen are measured each frame
   const para = new Set();
   const paraIO = new IntersectionObserver(es => es.forEach(e => (e.isIntersecting ? para.add(e.target) : para.delete(e.target))), { rootMargin: '10% 0px' });
-  $$('.proof-item img, .ch img, .sv-frame').forEach(el => { el.dataset.parallax ||= el.classList.contains('sv-frame') ? '0.06' : '0.12'; paraIO.observe(el); });
+  $$('.note-img img').forEach(el => paraIO.observe(el));
 
-  let tickX = 0, skew = 0, lastY = scrollY, activeStep = -1, tickHalf = 0;
-  const measureTicker = () => { tickHalf = ticker.scrollWidth / 2; };
-  measureTicker(); addEventListener('resize', measureTicker);
+  let tickX = 0, skew = 0, lastY = scrollY, tickHalf = 0;
+  const measure = () => { tickHalf = ticker.scrollWidth / 2; movePill(activeLink); };
+  measure(); addEventListener('resize', measure);
+  document.fonts?.ready.then(measure);
 
   function frame(time) {
     lenis?.raf(time);
@@ -306,14 +485,12 @@
     fab.classList.toggle('show', y > hero.offsetHeight * 0.7);
 
     if (!reduced) {
-      // ticker: always drifting, speeds up and leans with scroll velocity, reverses with direction
       const dir = vel < -0.2 ? -1 : 1;
       tickX -= (0.55 + Math.min(Math.abs(vel), 60) * 0.35) * dir;
       if (tickHalf) { if (tickX <= -tickHalf) tickX += tickHalf; if (tickX > 0) tickX -= tickHalf; }
       skew = lerp(skew, clamp(vel * -0.35, -10, 10), 0.12);
       ticker.style.transform = `translate3d(${tickX}px,0,0) skewX(${skew.toFixed(2)}deg)`;
 
-      // hero drifts up and fades as you leave it; swirl turns with scroll
       if (y < vh * 1.2) {
         heroCopy.style.transform = `translate3d(0, ${y * 0.18}px, 0)`;
         heroCopy.style.opacity = String(clamp(1 - y / (vh * 0.85), 0, 1));
@@ -324,344 +501,33 @@
       para.forEach(el => {
         const box = el.parentElement.getBoundingClientRect();
         const p = (box.top + box.height / 2 - vh / 2) / vh;
-        el.style.setProperty('--py', `${(-p * +el.dataset.parallax * box.height).toFixed(1)}px`);
+        el.style.setProperty('--py', `${(-p * 0.12 * box.height).toFixed(1)}px`);
       });
+
+      // layers cycle on their own until someone picks one
+      if (layerAuto && layersVisible && !document.hidden) {
+        const p = (time - layerStart) / LAYER_MS;
+        timerBar.style.transform = `scaleX(${clamp(p, 0, 1).toFixed(3)})`;
+        if (p >= 1) showLayer((layer + 1) % LAYERS.length);
+      }
     }
 
-    // statement words light up with scroll
     const sr = stText.getBoundingClientRect();
     if (sr.top < vh && sr.bottom > 0) {
       const lit = Math.round(clamp((vh * 0.85 - sr.top) / (sr.height + vh * 0.35), 0, 1) * words.length);
       words.forEach((w, i) => w.classList.toggle('lit', i < lit));
     }
-
-    // pinned process story: the step nearest the middle of the screen drives the viewer
-    const str = story.getBoundingClientRect();
-    if (str.top < vh && str.bottom > 0) {
-      let best = 0, bestD = Infinity;
-      steps.forEach((s, i) => {
-        const r = s.getBoundingClientRect();
-        const d = Math.abs(r.top + r.height / 2 - vh / 2);
-        if (d < bestD) { bestD = d; best = i; }
-      });
-      if (best !== activeStep) {
-        activeStep = best;
-        steps.forEach((s, i) => s.classList.toggle('active', i === best));
-        svMedia.forEach((m, i) => m.classList.toggle('on', i === best));
-        svStep.textContent = String(best + 1).padStart(2, '0');
-      }
-      svBar.style.transform = `scaleX(${clamp((vh / 2 - str.top) / str.height, 0, 1).toFixed(3)})`;
-    }
-
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-
-  /* ==========================================================================
-     COVERAGE PLANNER
-     Plan space is 100 × 64 units. Walls block a camera's view, so the
-     coverage number and the red blind-spot dots are honest about rooms.
-     ========================================================================== */
-  const SITES = {
-    home: {
-      label: 'Home',
-      walls: [[40, 4, 40, 18], [40, 24, 40, 40], [4, 40, 16, 40], [24, 40, 40, 40], [40, 24, 48, 24], [56, 24, 66, 24],
-        [66, 4, 66, 10], [66, 16, 66, 40], [66, 46, 66, 60], [66, 30, 74, 30], [82, 30, 96, 30]],
-      labels: [['Living', 22, 22], ['Kitchen', 53, 14], ['Bed 1', 81, 17], ['Bed 2', 81, 45], ['Dining', 53, 42], ['Compound · Gate', 22, 51]],
-      auto: [[6, 6], [94, 6], [6, 58], [94, 58], [53, 58]]
-    },
-    office: {
-      label: 'Office',
-      walls: [[4, 40, 12, 40], [20, 40, 60, 40], [60, 4, 60, 12], [60, 20, 60, 52], [60, 28, 70, 28], [78, 28, 96, 28],
-        [76, 28, 76, 36], [76, 42, 76, 60], [60, 44, 66, 44], [72, 44, 76, 44], [34, 40, 34, 50]],
-      labels: [['Open plan', 32, 22], ['Boardroom', 78, 16], ['Server', 68, 36], ['Manager', 86, 45], ['Reception', 19, 51], ['Lobby', 47, 51]],
-      auto: [[6, 6], [58, 6], [94, 6], [6, 58], [58, 58], [94, 58]]
-    },
-    school: {
-      label: 'School',
-      walls: [[4, 26, 10, 26], [16, 26, 34, 26], [40, 26, 58, 26], [64, 26, 82, 26], [88, 26, 96, 26],
-        [28, 4, 28, 26], [52, 4, 52, 26], [76, 4, 76, 26], [4, 34, 12, 34], [18, 34, 30, 34], [30, 34, 30, 60]],
-      labels: [['Class 1', 16, 15], ['Class 2', 40, 15], ['Class 3', 64, 15], ['Lab', 86, 15], ['Corridor', 50, 30.6], ['Admin', 17, 47], ['Grounds', 63, 47]],
-      auto: [[6, 6], [30, 6], [54, 6], [94, 6], [6, 30], [94, 30], [32, 58], [94, 58]]
-    },
-    shop: {
-      label: 'Shop',
-      walls: [[70, 4, 70, 14], [70, 20, 70, 60], [70, 36, 78, 36], [84, 36, 96, 36], [4, 44, 22, 44], [30, 44, 30, 52]],
-      shelves: [[14, 12, 40, 3], [14, 22, 40, 3], [14, 32, 40, 3]],
-      labels: [['Shop floor', 34, 8], ['Till', 16, 53], ['Entrance', 50, 56.5], ['Store', 83, 20], ['Office', 83, 48]],
-      door: [44, 60, 56, 60],
-      auto: [[6, 6], [68, 6], [6, 42], [68, 42], [94, 6], [94, 58]]
-    }
-  };
-  const OUT = { x0: 4, y0: 4, x1: 96, y1: 60 };
-  const RANGE = 30;               // how far one camera usefully sees, in plan units
-  const HALF_FOV = Math.PI / 4;   // 90° lens
-  const STEP = 1.6;               // coverage sample spacing
-  const MAX_CAMS = 40;
-  const NS = 'http://www.w3.org/2000/svg';
-
-  const plan = $('#plan');
-  const gRooms = $('#planRooms'), gCones = $('#planCones'), gCams = $('#planCams');
-  const hint = $('#planHint');
-  const planWrap = $('.plan-wrap');
-  const canvas = document.createElement('canvas');
-  canvas.setAttribute('aria-hidden', 'true');
-  canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
-  planWrap.prepend(canvas);
-  const ctx = canvas.getContext('2d');
-
-  let siteKey = 'home';
-  let cams = [];
-  let coverage = 0;
-
-  const el = (tag, attrs) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; };
-
-  function drawSite() {
-    const s = SITES[siteKey];
-    gRooms.replaceChildren();
-    gRooms.append(el('rect', { class: 'room', x: OUT.x0, y: OUT.y0, width: OUT.x1 - OUT.x0, height: OUT.y1 - OUT.y0 }));
-    (s.shelves || []).forEach(([x, y, w, h]) => gRooms.append(el('rect', { x, y, width: w, height: h, rx: .4, fill: 'rgba(236,241,255,.10)', stroke: 'rgba(236,241,255,.3)', 'stroke-width': .2 })));
-    s.walls.forEach(([x1, y1, x2, y2]) => gRooms.append(el('line', { class: 'wall', x1, y1, x2, y2 })));
-    gRooms.append(el('rect', { class: 'outer', x: OUT.x0, y: OUT.y0, width: OUT.x1 - OUT.x0, height: OUT.y1 - OUT.y0 }));
-    if (s.door) {
-      const [x1, y1, x2, y2] = s.door;
-      gRooms.append(el('line', { x1, y1, x2, y2, stroke: '#071029', 'stroke-width': 1.4 }));
-      gRooms.append(el('line', { class: 'door', x1, y1, x2, y2 }));
-    }
-    s.labels.forEach(([t, x, y]) => { const n = el('text', { class: 'label', x, y, 'text-anchor': 'middle' }); n.textContent = t; gRooms.append(n); });
-    $('#roSite').textContent = s.label;
-  }
-
-  // does segment p→q cross segment a→b?
-  function crosses(px, py, qx, qy, ax, ay, bx, by) {
-    const d = (qx - px) * (by - ay) - (qy - py) * (bx - ax);
-    if (d === 0) return false;
-    const t = ((ax - px) * (by - ay) - (ay - py) * (bx - ax)) / d;
-    const u = ((ax - px) * (qy - py) - (ay - py) * (qx - px)) / d;
-    return t > 0.0001 && t < 0.9999 && u >= 0 && u <= 1;
-  }
-
-  function sees(cam, x, y, walls) {
-    const dx = x - cam.x, dy = y - cam.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist > RANGE) return false;
-    if (dist > 0.5) {
-      let a = Math.atan2(dy, dx) - cam.a;
-      a = Math.atan2(Math.sin(a), Math.cos(a));
-      if (Math.abs(a) > HALF_FOV) return false;
-    }
-    for (const w of walls) if (crosses(cam.x, cam.y, x, y, w[0], w[1], w[2], w[3])) return false;
-    return true;
-  }
-
-  function render() {
-    const walls = SITES[siteKey].walls;
-    // canvas size follows the element
-    const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    if (canvas.width !== Math.round(rect.width * dpr)) { canvas.width = Math.round(rect.width * dpr); canvas.height = Math.round(rect.height * dpr); }
-    const sx = canvas.width / 100, sy = canvas.height / 64;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    let total = 0, covered = 0;
-    for (let y = OUT.y0 + STEP / 2; y < OUT.y1; y += STEP) {
-      for (let x = OUT.x0 + STEP / 2; x < OUT.x1; x += STEP) {
-        total++;
-        const hit = cams.some(c => sees(c, x, y, walls));
-        if (hit) {
-          covered++;
-          ctx.fillStyle = 'rgba(232,181,58,.30)';
-          ctx.fillRect((x - STEP / 2) * sx + .5, (y - STEP / 2) * sy + .5, STEP * sx - 1, STEP * sy - 1);
-        } else if (cams.length) {
-          ctx.fillStyle = 'rgba(255,59,59,.38)';
-          ctx.beginPath(); ctx.arc(x * sx, y * sy, Math.max(1, .22 * sx), 0, 7); ctx.fill();
-        }
-      }
-    }
-    coverage = total ? Math.round((covered / total) * 100) : 0;
-
-    // cones (direction only) and camera pins
-    gCones.replaceChildren(); gCams.replaceChildren();
-    cams.forEach((c, i) => {
-      const a1 = c.a - HALF_FOV, a2 = c.a + HALF_FOV;
-      const d = `M${c.x} ${c.y} L${c.x + RANGE * Math.cos(a1)} ${c.y + RANGE * Math.sin(a1)} A${RANGE} ${RANGE} 0 0 1 ${c.x + RANGE * Math.cos(a2)} ${c.y + RANGE * Math.sin(a2)}Z`;
-      gCones.append(el('path', { class: 'cone', d }));
-      const g = el('g', { class: 'cam', 'data-i': i });
-      g.append(el('circle', { class: 'halo', cx: c.x, cy: c.y, r: 1.6 }));
-      g.append(el('line', { x1: c.x, y1: c.y, x2: c.x + 3.4 * Math.cos(c.a), y2: c.y + 3.4 * Math.sin(c.a), stroke: '#F5CE6B', 'stroke-width': .5, 'stroke-linecap': 'round' }));
-      g.append(el('circle', { class: 'body', cx: c.x, cy: c.y, r: 1.6 }));
-      const t = el('text', { x: c.x, y: c.y + .05 }); t.textContent = i + 1; g.append(t);
-      gCams.append(g);
-    });
-    updateReadout();
-  }
-
-  function updateReadout() {
-    const n = cams.length;
-    $('#covPct').textContent = coverage;
-    $('#roCams').textContent = n;
-    const rec = recommendRecorder(n);
-    $('#roRec').textContent = rec ? rec.label : '–';
-    $('#gFill').style.strokeDashoffset = String(314.16 * (1 - coverage / 100));
-    $('#gFill').style.stroke = coverage >= 85 ? '#3BE38A' : coverage >= 60 ? '#E8B53A' : '#FF7A45';
-    $('#roNote').textContent = !n ? 'Place your first camera on the plan.'
-      : rec?.custom ? 'Big site. We design systems this size on a free survey. Book it on WhatsApp below.'
-      : coverage < 60 ? 'Big blind spots (red). Try entrances, corners and corridors.'
-      : coverage < 85 ? 'Good start. A site survey usually finds the last blind spots.'
-      : 'Strong coverage. Let us confirm it on site.';
-    const send = $('#sendPlan');
-    if (n) {
-      send.href = waLink(planSummary(true));
-      send.target = '_blank'; send.rel = 'noopener';
-    } else {
-      send.href = '#survey'; send.removeAttribute('target');
-    }
-    survey.setPlan(n ? planSummary(false) : '');
-  }
-
-  function planSummary(full) {
-    const rec = recommendRecorder(cams.length);
-    const core = `${SITES[siteKey].label}: ${cams.length} camera${cams.length === 1 ? '' : 's'}, ${coverage}% coverage${rec ? `, ${rec.label}` : ''}`;
-    return full ? `Hello Sutakem, I used your coverage planner.\n\n${core}.\n\nI'd like a free site survey to confirm it.` : core;
-  }
-
-  /**
-   * Pick a recorder (NVR/DVR) size for the number of cameras on the plan.
-   * Returns null for zero cameras, else { channels, label }.
-   */
-  function recommendRecorder(cameraCount) {
-    // Sutakem rule: always leave at least 2 spare channels for future cameras.
-    // If no standard recorder can do that (31+ cameras), it's a custom design job.
-    const SPARE = 2;
-    if (cameraCount === 0) return null;
-    const channels = [4, 8, 16, 32].find(size => size - cameraCount >= SPARE);
-    if (!channels) return { channels: null, custom: true, label: 'Custom system' };
-    return { channels, label: `${channels}-channel NVR · ${channels - cameraCount} spare` };
-  }
-
-  // pointer: tap empty space to place, drag to aim, tap a camera to remove, drag a camera to re-aim
-  const toPlan = e => {
-    const p = new DOMPoint(e.clientX, e.clientY).matrixTransform(plan.getScreenCTM().inverse());
-    return { x: clamp(p.x, OUT.x0 + .8, OUT.x1 - .8), y: clamp(p.y, OUT.y0 + .8, OUT.y1 - .8) };
-  };
-  let drag = null;
-  let pending = 0;
-  const schedule = () => { if (!pending) pending = requestAnimationFrame(() => { pending = 0; render(); }); };
-
-  plan.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    const p = toPlan(e);
-    const hitI = cams.findIndex(c => Math.hypot(c.x - p.x, c.y - p.y) < 2.6);
-    if (hitI >= 0) {
-      drag = { i: hitI, moved: false, existing: true };
-    } else {
-      if (cams.length >= MAX_CAMS) return;
-      const cx = (OUT.x0 + OUT.x1) / 2, cy = (OUT.y0 + OUT.y1) / 2;
-      cams.push({ x: p.x, y: p.y, a: Math.atan2(cy - p.y, cx - p.x) });
-      drag = { i: cams.length - 1, moved: false, existing: false };
-      hint.style.opacity = '0';
-      render();
-    }
-    plan.setPointerCapture(e.pointerId);
-  });
-  plan.addEventListener('pointermove', e => {
-    if (!drag) return;
-    const c = cams[drag.i];
-    const raw = new DOMPoint(e.clientX, e.clientY).matrixTransform(plan.getScreenCTM().inverse());
-    if (Math.hypot(raw.x - c.x, raw.y - c.y) > 2) {
-      drag.moved = true;
-      c.a = Math.atan2(raw.y - c.y, raw.x - c.x);
-      schedule();
-    }
-  });
-  const endDrag = () => {
-    if (drag && drag.existing && !drag.moved) { cams.splice(drag.i, 1); render(); }
-    drag = null;
-  };
-  plan.addEventListener('pointerup', endDrag);
-  plan.addEventListener('pointercancel', () => { drag = null; });
-
-  $$('.site-tab').forEach(btn => btn.addEventListener('click', () => {
-    $$('.site-tab').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); });
-    siteKey = btn.dataset.site; cams = []; hint.style.opacity = '1';
-    drawSite(); render();
-  }));
-  $('#clearPlan').addEventListener('click', () => { cams = []; hint.style.opacity = '1'; render(); });
-  $('#autoPlace').addEventListener('click', () => {
-    const cx = (OUT.x0 + OUT.x1) / 2, cy = (OUT.y0 + OUT.y1) / 2;
-    cams = SITES[siteKey].auto.map(([x, y]) => ({ x, y, a: Math.atan2(cy - y, cx - x) }));
-    hint.style.opacity = '0';
-    render();
-  });
-  new ResizeObserver(() => render()).observe(planWrap);
-
-  /* ==========================================================================
-     SURVEY WORK ORDER
-     ========================================================================== */
-  const survey = (() => {
-    const chosen = new Set();
-    const list = $('#ticketList');
-    const planLabel = $('#ticketPlanLabel'), planEl = $('#ticketPlan');
-    const d = new Date();
-    const ref = `SUT-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 900) + 100)}`;
-    $('#ticketRef').textContent = ref;
-    let planText = '';
-    const val = id => $(id).value.trim();
-
-    function message() {
-      const lines = ['Hello Sutakem Solutions,', '', `I'd like to book a free site survey (ref ${ref}).`];
-      if (chosen.size) lines.push('', 'Services:', ...[...chosen].map(s => `- ${s}`));
-      if (planText) lines.push('', `Coverage plan: ${planText}`);
-      const details = [['Name', val('#fName')], ['Phone', val('#fPhone')], ['Location', val('#fLoc')], ['Site', val('#fMsg')]].filter(([, v]) => v);
-      if (details.length) lines.push('', ...details.map(([k, v]) => `${k}: ${v}`));
-      lines.push('', 'Thank you.');
-      return lines.join('\n');
-    }
-    function sync() {
-      list.replaceChildren();
-      if (!chosen.size) list.innerHTML = '<li class="empty">No services selected yet.</li>';
-      chosen.forEach(s => { const li = document.createElement('li'); li.textContent = s; list.append(li); });
-      planLabel.hidden = planEl.hidden = !planText;
-      planEl.textContent = planText;
-      const msg = message();
-      $('#sendWa').href = waLink(msg);
-      $('#sendMail').href = `mailto:${EMAIL}?subject=${encodeURIComponent(`Free site survey request ${ref}`)}&body=${encodeURIComponent(msg)}`;
-    }
-    function toggle(chip, force) {
-      const v = chip.dataset.val;
-      const on = force ?? !chosen.has(v);
-      on ? chosen.add(v) : chosen.delete(v);
-      chip.classList.toggle('on', on);
-      chip.setAttribute('aria-pressed', String(on));
-      sync();
-    }
-    $$('.chip').forEach(c => { c.setAttribute('aria-pressed', 'false'); c.addEventListener('click', () => toggle(c)); });
-    ['#fName', '#fPhone', '#fLoc', '#fMsg'].forEach(id => $(id).addEventListener('input', sync));
-    $$('[data-preselect]').forEach(a => a.addEventListener('click', () => {
-      const chip = $$('.chip').find(c => c.dataset.val === a.dataset.preselect);
-      if (chip) toggle(chip, true);
-    }));
-    sync();
-    return {
-      setPlan(text) {
-        planText = text;
-        if (text) { const cctv = $$('.chip').find(c => c.dataset.val === 'CCTV surveillance'); if (cctv && !chosen.has('CCTV surveillance')) toggle(cctv, true); }
-        sync();
-      }
-    };
-  })();
-
-  drawSite();
-  render();
 
   /* ---------- lightbox ---------- */
   const lb = $('#lightbox'), lbImg = $('#lbImg');
   let lastFocus = null;
   const closeLb = () => { lb.hidden = true; lenis?.start(); lastFocus?.focus(); };
-  $$('.proof-item').forEach(b => b.addEventListener('click', () => {
+  $$('.note-img').forEach(b => b.addEventListener('click', () => {
     lastFocus = b;
-    const img = $('img', b);
-    lbImg.src = b.dataset.full; lbImg.alt = img.alt;
+    lbImg.src = b.dataset.full; lbImg.alt = $('img', b).alt;
     lb.hidden = false; lenis?.stop(); $('#lbClose').focus();
   }));
   lb.addEventListener('click', e => { if (e.target !== lbImg) closeLb(); });
