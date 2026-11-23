@@ -18,7 +18,7 @@ window.SUTAKEM_FACTS = {
 
   // 24/7 support: the client's review says keep it ONLY if Sutakem genuinely answers round the clock.
   // true = show "24/7 technical support" · false = show the free site assessment instead.
-  support247: true,         // AWAITING CLIENT CONFIRMATION (asked 2026-11-23)
+  support247: true,         // confirmed by Brian for Sutakem, 2026-11-23
 
   location: null,          // e.g. "Ruiru, Kiambu County"
   hours: null              // e.g. "Mon–Sat 8am–6pm · emergencies 24/7"

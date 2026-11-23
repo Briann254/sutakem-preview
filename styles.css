@@ -870,3 +870,37 @@ html.lenis, html.lenis body { height: auto; }
 .foot-svc a:hover { color: var(--gold-hi); }
 .wz-options .wz-other, .wz-options [data-val="consult"] { grid-column: 1 / -1; justify-content: center; }
 .survey-today { text-align: center; font-weight: 600; color: var(--champagne); margin: 4px 0 22px; }
+.etims-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 22px; margin: 10px 0 26px; }
+.etims-list li { position: relative; padding-left: 20px; font-size: .94rem; line-height: 1.5; color: var(--paper-ink); }
+.etims-list li::before { content: ""; position: absolute; left: 2px; top: .55em; width: 8px; height: 8px; border-radius: 2px; background: var(--gold); }
+@media (max-width: 600px) { .etims-list { grid-template-columns: 1fr; } }
+
+/* ==========================================================================
+   v7 · colour rhythm + card layout
+   Navy stays the brand base; two warm light sections (corporate = sand,
+   eTIMS = paper) break the long navy run with gold's complementary warmth.
+   ========================================================================== */
+/* service cards: wide photos always sit on top, so two-person scenes are never cropped */
+.svc { grid-template-columns: 1fr; }
+.svc-media { aspect-ratio: 16 / 9; min-height: 0; }
+.svc-media::after { background: linear-gradient(180deg, transparent 62%, rgba(9, 20, 40, .55)); }
+
+/* corporate: warm sand section */
+.corporate { --sand: #EFE5D2; background: radial-gradient(60% 70% at 85% 0%, rgba(232, 181, 58, .22), transparent 70%), linear-gradient(180deg, #F6F0E4 0%, var(--sand) 100%); color: var(--paper-ink); }
+.corporate::after { content: ""; position: absolute; inset: 0; z-index: -1; background: url(assets/img/guilloche-wave.svg) center / cover no-repeat; opacity: .07; pointer-events: none; }
+.corporate { position: relative; isolation: isolate; }
+.corporate .eyebrow { color: var(--gold-lo); }
+.corporate h2 { color: var(--paper-ink); }
+.corporate h2 em { color: var(--gold-lo); }
+.corporate .sub { color: #46506B; }
+.corporate .corp-card { background: rgba(255, 255, 255, .78); border: 1px solid rgba(11, 20, 48, .08); box-shadow: 0 20px 50px -30px rgba(11, 20, 48, .35); backdrop-filter: none; }
+.corporate .corp-title { color: var(--gold-lo); }
+.corporate .corp-list li { color: var(--paper-ink); }
+.corporate .corp-list li .ic, .corporate .sector-tag .ic { color: var(--gold-lo); }
+.corporate .sector-tag { background: #FBF8F2; border-color: rgba(11, 20, 48, .1); color: var(--paper-ink); }
+.corporate .corp-cta-box { background: var(--paper-ink); border-color: transparent; color: var(--ice); }
+.corporate .corp-cta-box p { color: #C9D1E6; }
+.corporate .corp-cta-box .corp-cta-lead { color: var(--gold); }
+/* comfortable thumb targets (44px) on the service cards and service index */
+.svc-cta { min-height: 44px; padding-block: 10px; }
+.svc-index a { min-height: 40px; display: inline-flex; align-items: center; }
