@@ -16,6 +16,10 @@ window.SUTAKEM_FACTS = {
   warranty: null,          // e.g. "1-year equipment warranty · 6 months on workmanship"
   compliance: [],          // e.g. ["KRA Tax Compliance Certificate", "NCA registered", "Dahua authorised installer"]  (only what he can show on request)
 
+  // 24/7 support: the client's review says keep it ONLY if Sutakem genuinely answers round the clock.
+  // true = show "24/7 technical support" · false = show the free site assessment instead.
+  support247: true,         // AWAITING CLIENT CONFIRMATION (asked 2026-11-23)
+
   location: null,          // e.g. "Ruiru, Kiambu County"
   hours: null              // e.g. "Mon–Sat 8am–6pm · emergencies 24/7"
 };

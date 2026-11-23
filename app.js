@@ -79,9 +79,12 @@
   /* ==========================================================================
      FACTS: real proof from facts.js, shown only when present
      ========================================================================== */
-  // Sutakem rule: 24/7 support always shows; confirmed numbers replace the photo-based ones.
+  // Sutakem rule: confirmed numbers replace the photo-based ones. The 24/7 item shows only while
+  // facts.support247 is true; if the client says support is not round the clock, it becomes the free assessment.
   function buildProofItems(facts, defaults) {
-    const always = defaults.find(d => d.value === '24/7');
+    const always = facts.support247 === false
+      ? { value: 'Free', label: 'site assessment before any quotation' }
+      : defaults.find(d => d.value === '24/7');
     const photo = defaults.filter(d => d !== always);
     const real = [];
     if (facts.yearsInBusiness) real.push({ value: `${facts.yearsInBusiness}+`, count: facts.yearsInBusiness, label: 'years installing security across Kenya' });
@@ -134,7 +137,7 @@
 
   /* ---------- statement words ---------- */
   const stText = $('#statementText');
-  const goldWords = new Set(['install', 'answer', 'Day', 'night.']);
+  const goldWords = new Set(['installs', 'supports']);
   stText.innerHTML = stText.textContent.trim().split(/\s+/)
     .map(w => `<span class="w${goldWords.has(w) ? ' gold' : ''}">${w}</span>`).join(' ');
   const words = $$('.w', stText);
@@ -172,10 +175,10 @@
 
   /* ---------- hero feeds keep cutting between cameras, like a real NVR ---------- */
   const POOL = [
-    { src: 'hero-feed.jpg', cap: 'CAM 01 · PERIMETER', alt: 'Dome CCTV camera with live views on a laptop and phone' },
-    { src: 'access.jpg', cap: 'CAM 02 · ACCESS', alt: 'Fingerprint access control reader at an office door' },
-    { src: 'network.jpg', cap: 'CAM 03 · SERVER ROOM', alt: 'Network switch with neatly patched cables' },
-    { src: 'cctv.jpg', cap: 'CAM 04 · FRONT WALL', alt: 'Twin outdoor cameras on a house wall' },
+    { src: 'cctv-tech.jpg', cap: 'CAM 01 · SURVEILLANCE', alt: 'Sutakem technician installing ceiling dome CCTV camera' },
+    { src: 'network-tech.jpg', cap: 'CAM 02 · SERVER RACK', alt: 'Sutakem technician cabling network infrastructure patch panel' },
+    { src: 'hero-feed.jpg', cap: 'CAM 03 · PERIMETER', alt: 'Dome CCTV camera with live views on a laptop and phone' },
+    { src: 'svc-access.jpg', cap: 'CAM 04 · ACCESS', alt: 'Sutakem technician testing a fingerprint access control reader' },
     { src: 'site-school.jpg', cap: 'CAM 05 · CAMPUS WALL', alt: 'Sixteen-camera wall covering a school campus' },
     { src: 'etims.jpg', cap: 'CAM 06 · TILL', alt: 'ETR and eTIMS devices at a till' },
     { src: 'site-office.jpg', cap: 'CAM 07 · RECEPTION', alt: 'Office CCTV monitor showing reception' }
@@ -202,22 +205,30 @@
   /* ==========================================================================
      LAYERS OF PROTECTION
      ========================================================================== */
+  // Each ring groups real services; items link to the full service sections below (#svc-*).
+  const SVC = {
+    fence: 'Electric Fencing & Perimeter Security', alarm: 'Intruder Alarm & Detection Systems',
+    access: 'Access Control & Entry Management', intercom: 'Intercom & Biometric Solutions',
+    cctv: 'CCTV Surveillance & Monitoring',
+    cabling: 'Structured Cabling & Network Infrastructure', wifi: 'Networking & Wi-Fi Solutions',
+    etims: 'eTIMS & ETR Solutions', it: 'IT Support & Computer Maintenance', cyber: 'Cybersecurity & Digital Protection'
+  };
   const LAYERS = [
-    { key: 'Perimeter', img: 'cctv.jpg', title: 'Stop problems at the fence.',
-      why: 'Your first line of defence: a fence that deters, and an alarm that tells you the moment someone tries.',
-      items: ['Electric fence installation', 'Alarm systems', 'Perimeter cameras on walls and gates'] },
-    { key: 'Entry', img: 'access.jpg', title: 'Decide who gets in.',
-      why: 'Fingerprint, card or code at the door, an intercom at the gate, and a record of who came in and when.',
-      items: ['Access control systems', 'Intercom systems', 'Biometric time & attendance for staff'] },
-    { key: 'Watch', img: 'site-office.jpg', title: 'See everything, from anywhere.',
-      why: 'HD and IP cameras recording around the clock, and you can watch them live from your phone.',
-      items: ['HD & IP CCTV installation', '24/7 recording', 'Remote viewing on your phone'] },
-    { key: 'Connect', img: 'network.jpg', title: 'A network that just works.',
-      why: 'Cameras, door readers and your office all run on the network. We cable it neatly and set up WiFi that reaches every room.',
-      items: ['Structured cabling', 'WiFi installation & optimisation', 'Router & switch configuration', 'Office & home networking'] },
-    { key: 'Business', img: 'etims.jpg', title: 'Keep the business running.',
-      why: 'Compliant receipts on every sale, computers that work, and an office desk for the everyday jobs.',
-      items: ['eTIMS & ETR repair, installation and ERP integration', 'Laptop repairs and RAM, SSD & OS upgrades', 'Windows, MS Office & antivirus', 'Printing, card design, KRA & eCitizen services'] }
+    { key: 'Perimeter', img: 'svc-fence.jpg', title: 'Perimeter Protection',
+      why: 'Deter intrusion at the boundary and receive timely alerts when potential security threats occur.',
+      items: ['fence', 'alarm'] },
+    { key: 'Entry', img: 'svc-access.jpg', title: 'Access & Entry Management',
+      why: 'Regulate entry, improve accountability, and communicate with visitors before granting access.',
+      items: ['access', 'intercom'] },
+    { key: 'Surveillance', img: 'cctv-tech.jpg', title: 'CCTV Surveillance & Monitoring',
+      why: 'Professionally installed CCTV with recording, playback, and remote viewing through smartphones and computers.',
+      items: ['cctv'] },
+    { key: 'Connectivity', img: 'network-tech.jpg', title: 'Networking & Cabling',
+      why: 'An organised cabling infrastructure and dependable Wi-Fi that support communication, productivity, and the systems that run on your network.',
+      items: ['cabling', 'wifi'] },
+    { key: 'Business', img: 'etims.jpg', title: 'Business Technology',
+      why: 'Invoicing systems, computers, and digital protection that keep your daily operations running.',
+      items: ['etims', 'it', 'cyber'] }
   ];
   LAYERS.forEach(l => { const i = new Image(); i.src = `assets/img/${l.img}`; });
   const detail = $('#layerDetail');
@@ -235,12 +246,12 @@
     rings.forEach((r, k) => { r.classList.toggle('on', k === i); r.classList.toggle('past', k < i); });
     detail.classList.remove('swap'); void detail.offsetWidth; detail.classList.add('swap');
     detail.innerHTML = `
-      <div class="ld-img"><img src="assets/img/${L.img}" alt=""><span class="mono">LAYER ${String(i + 1).padStart(2, '0')} · ${L.key.toUpperCase()}</span></div>
+      <div class="ld-img"><img src="assets/img/${L.img}" alt="${L.title}"><span class="mono">LAYER ${String(i + 1).padStart(2, '0')} · ${L.key.toUpperCase()}</span></div>
       <div class="ld-body">
         <h3>${L.title}</h3>
         <p>${L.why}</p>
-        <ul>${L.items.map(x => `<li>${x}</li>`).join('')}</ul>
-        <a class="btn btn-line btn-sm" href="${waLink(`Hello Sutakem, I'd like to ask about ${L.key.toLowerCase()} security (${L.items[0]}).`)}" target="_blank" rel="noopener">Ask about this on WhatsApp</a>
+        <ul>${L.items.map(k => `<li><a href="#svc-${k}">${SVC[k]}</a></li>`).join('')}</ul>
+        <a class="btn btn-line btn-sm" href="${waLink(`Hello Sutakem Solutions, I would like to enquire about ${L.items.map(k => SVC[k]).join(' / ')}.`)}" target="_blank" rel="noopener">Request Details on WhatsApp</a>
       </div>`;
     layerStart = performance.now();
   }
@@ -259,50 +270,66 @@
   /* ==========================================================================
      FIND YOUR SETUP (3 questions, plain-language result, no fake numbers)
      ========================================================================== */
-  const SIZES = { small: 'Small', medium: 'Medium', large: 'Large' };
-  const WORRIES = { breakins: 'Break-ins and theft', visitors: 'Who comes and goes', away: 'Seeing the place when away', staff: 'Staff attendance', wifi: 'Slow internet', etims: 'eTIMS compliance', computers: 'Failing computers' };
-  const RECS = {
-    fence: { name: 'Electric fence', chip: 'Electric fence', why: 'Stops intruders at the boundary, before they reach the building.' },
-    alarm: { name: 'Alarm system', chip: 'Alarm system', why: 'Alerts you the moment a door or window is forced.' },
-    access: { name: 'Access control at the main door', chip: 'Access control', why: 'Only the right people get in, with a record of when.' },
-    intercom: { name: 'Intercom at the gate', chip: 'Intercom & biometrics', why: 'See and talk to visitors before you open.' },
-    attendance: { name: 'Biometric time & attendance', chip: 'Intercom & biometrics', why: 'Staff clock in with a fingerprint, so timesheets are accurate.' },
-    cctv: { name: 'CCTV with phone viewing', chip: 'CCTV cameras', why: 'Covers entrances and key areas, records 24/7, and you can watch from your phone.' },
-    wifi: { name: 'WiFi and structured cabling', chip: 'Networking & WiFi', why: 'Reliable internet in every room, and the backbone cameras need.' },
-    etims: { name: 'eTIMS & ETR setup', chip: 'ETR / eTIMS', why: 'Compliant receipts on every sale, connected to your accounts.' },
-    it: { name: 'Computer repairs & upgrades', chip: 'Computer repairs & upgrades', why: 'Faster, dependable machines with SSD and RAM upgrades.' }
+  const SIZES = { small: 'Small premises', medium: 'Medium premises', large: 'Large premises' };
+  const PLACES = {
+    residential: 'Residential home',
+    office: 'Office or commercial premises',
+    school: 'School or educational institution',
+    shop: 'Retail shop or supermarket',
+    estate: 'Apartment complex or residential estate',
+    warehouse: 'Warehouse or industrial facility',
+    other: 'Other property or facility'
   };
-  const ORDER = ['fence', 'alarm', 'access', 'intercom', 'attendance', 'cctv', 'wifi', 'etims', 'it'];
+  // name/why use the client's own service wording; chip must equal a booking-form chip (data-val)
+  const RECS = {
+    fence: { name: 'Electric fencing & perimeter security', chip: 'Electric fencing & perimeter security', why: 'Deters intrusion and strengthens the security of your boundary.' },
+    alarm: { name: 'Intruder alarm system', chip: 'Intruder alarm systems', why: 'Detects unauthorised access and provides timely alerts.' },
+    access: { name: 'Access control & entry management', chip: 'Access control & entry management', why: 'Regulates entry and keeps a record of access to designated areas.' },
+    intercom: { name: 'Intercom & biometric system', chip: 'Intercom & biometric systems', why: 'Lets you speak with visitors before granting entry, and supports staff attendance records.' },
+    cctv: { name: 'CCTV surveillance & monitoring', chip: 'CCTV surveillance & monitoring', why: 'Recording, playback, and remote viewing, configured to suit your premises.' },
+    cabling: { name: 'Structured cabling', chip: 'Structured cabling', why: 'An organised, labelled network backbone for your systems.' },
+    wifi: { name: 'Networking & Wi-Fi', chip: 'Networking & Wi-Fi solutions', why: 'Dependable wired and wireless connectivity where you need it.' },
+    etims: { name: 'eTIMS & ETR solutions', chip: 'eTIMS & ETR solutions', why: 'Installation, configuration, and integration with compatible POS and accounting systems.' },
+    it: { name: 'IT support & computer maintenance', chip: 'Computer maintenance & IT support', why: 'Diagnostics, repairs, upgrades, and general technical support.' },
+    cyber: { name: 'Cybersecurity solutions', chip: 'Cybersecurity solutions', why: 'Practical measures to reduce security risks and protect your information.' },
+    consult: { name: 'General technical consultation', chip: 'General technical consultation', why: 'We discuss your requirements and guide you towards the most suitable option.' }
+  };
+  const WORRIES = Object.fromEntries(Object.entries(RECS).map(([k, r]) => [k, r.name]));
+  const ORDER = ['fence', 'alarm', 'access', 'intercom', 'cctv', 'cabling', 'wifi', 'etims', 'it', 'cyber', 'consult'];
 
   /**
-   * Turn the visitor's answers into a starting list of services.
-   * place: 'home' | 'office' | 'school' | 'shop' | 'estate' | 'warehouse'
-   * worries: Set of keys from WORRIES. size: 'small' | 'medium' | 'large'
-   * Returns keys of RECS; they are shown in ORDER (outer layer first).
+   * Turn the answers into a recommended starting point.
+   * place: a key of PLACES · picked: Set of RECS keys the visitor chose · size: 'small' | 'medium' | 'large'
+   * Returns RECS keys; the page shows them in ORDER.
    */
-  function recommendFor(place, worries, size) {
-    // Sutakem rules: shops always get eTIMS (it's a legal requirement), and homes
-    // with a compound (medium or large) always get an electric fence suggestion.
-    const out = new Set();
+  function recommendFor(place, picked, size) {
+    const out = new Set([...picked].filter(k => RECS[k]));
+    // Sutakem's standing rules: shops always see eTIMS; homes with a compound see an electric fence.
     if (place === 'shop') out.add('etims');
-    if (place === 'home' && size !== 'small') out.add('fence');
-    const hasCompound = ['estate', 'warehouse', 'school'].includes(place) || (place === 'home' && size !== 'small');
-    if (worries.has('breakins')) { if (hasCompound) out.add('fence'); out.add('alarm'); out.add('cctv'); }
-    if (worries.has('visitors')) { out.add(hasCompound && place !== 'school' ? 'intercom' : 'access'); out.add('cctv'); }
-    if (worries.has('away')) out.add('cctv');
-    if (worries.has('staff')) out.add('attendance');
-    if (worries.has('wifi')) out.add('wifi');
-    if (worries.has('etims')) out.add('etims');
-    if (worries.has('computers')) out.add('it');
-    if (size === 'large' && out.has('cctv')) out.add('wifi');
+    if (place === 'residential' && size !== 'small') out.add('fence');
+
+    // Companion suggestions, kept deliberately few: large camera systems need a cabling backbone,
+    // and "consultation" only stays when nothing more specific was chosen.
+    if (out.has('cctv') && size === 'large') out.add('cabling');
+    if (out.size > 1) out.delete('consult');
+
+    if (out.size === 0) out.add('consult');
     return [...out];
   }
 
   function visitChecks(place, size) {
-    const byPlace = { home: 'Your gate, compound and doors', estate: 'Gates, common areas and parking', office: 'Reception, records and server rooms', school: 'Gates, classrooms, labs and the boundary', shop: 'Till, entrance and stock areas', warehouse: 'Loading bays, yard and boundary' };
-    const list = [byPlace[place], 'Where the recorder and screen should live', 'Power and internet points'];
-    if (size !== 'small') list.push('Cable routes between rooms and outside');
-    if (size === 'large') list.push('Distances and links between buildings', 'Dark areas that need night vision');
+    const byPlace = {
+      residential: 'Perimeter fence, gate points, compound coverage, and recorder location',
+      estate: 'Entrance barriers, perimeter line, common zones, and security control room',
+      office: 'Reception, access doors, server cabinet, and executive office visibility',
+      school: 'Main gates, classroom corridors, computer lab, and perimeter fence',
+      shop: 'Point-of-sale till counter, stockroom, entrance, and customer aisles',
+      warehouse: 'Loading bays, perimeter boundary, storage racks, and yard lighting',
+      other: 'Main access points, building layout, and areas that need coverage'
+    };
+    const list = [byPlace[place] || 'Primary access points and building layout', 'Optimal recorder location, display mounting, and power sources'];
+    if (size !== 'small') list.push('Cable pathway routes between interior rooms and exterior points');
+    if (size === 'large') list.push('Inter-building network links, switch rack positions, and night vision reach');
     return list;
   }
 
@@ -317,26 +344,26 @@
     wz.step = s;
     wzSteps.forEach((el, i) => el.classList.toggle('active', i === s));
     $('#wzBar').style.transform = `scaleX(${s / 3})`;
-    $('#wzCount').textContent = s < 3 ? `QUESTION ${s + 1} OF 3` : 'YOUR STARTING POINT';
+    $('#wzCount').textContent = s < 3 ? `QUESTION ${s + 1} OF 3` : 'RECOMMENDED STARTING POINT';
     wzBack.disabled = s === 0;
     wzNext.disabled = !answered(s);
     wzNext.hidden = s === 3;
-    wzNext.innerHTML = s === 2 ? 'See my setup <svg class="ic"><use href="#i-arrow"/></svg>' : 'Next <svg class="ic"><use href="#i-arrow"/></svg>';
+    wzNext.innerHTML = s === 2 ? 'See My Starting Point <svg class="ic"><use href="#i-arrow"/></svg>' : 'Next <svg class="ic"><use href="#i-arrow"/></svg>';
     if (s === 3) wzResult();
   }
   function wzResult() {
     const keys = recommendFor(wz.place, wz.worries, wz.size);
     const recs = ORDER.filter(k => keys.includes(k)).map(k => RECS[k]);
-    const placeName = wz.place;
-    $('#wzTag').textContent = `${SIZES[wz.size].toUpperCase()} ${placeName.toUpperCase()} · ${wz.worries.size} CONCERN${wz.worries.size === 1 ? '' : 'S'}`;
-    $('#wzTitle').textContent = recs.length ? `Where we would start for your ${placeName}` : 'Let us look at it together';
+    const placeName = PLACES[wz.place] || wz.place;
+    $('#wzTag').textContent = `${placeName.toUpperCase()} · ${(SIZES[wz.size] || wz.size).toUpperCase()}`;
+    $('#wzTitle').textContent = 'Your recommended starting point';
     $('#wzRecs').innerHTML = recs.length
       ? recs.map((r, i) => `<li style="--i:${i}"><b>${r.name}</b><span>${r.why}</span></li>`).join('')
-      : '<li><b>A free site visit</b><span>Tell us what is going on and we will suggest the right setup on site.</span></li>';
+      : '<li><b>Complimentary Site Assessment</b><span>Our team will visit your site to review your layout and determine the optimal setup.</span></li>';
     $('#wzChecks').innerHTML = visitChecks(wz.place, wz.size).map(c => `<li>${c}</li>`).join('');
     const worryText = [...wz.worries].map(w => WORRIES[w]).join(', ');
-    const summary = `${SIZES[wz.size]} ${placeName} · concerns: ${worryText}${recs.length ? ` · suggested start: ${recs.map(r => r.name).join(', ')}` : ''}`;
-    $('#wzSend').href = waLink(`Hello Sutakem, I used "Find your setup" on your website.\n\nPlace: ${SIZES[wz.size]} ${placeName}\nConcerns: ${worryText}\n${recs.length ? `Suggested start: ${recs.map(r => r.name).join(', ')}\n` : ''}\nI'd like a free site visit.`);
+    const summary = `${SIZES[wz.size]} (${placeName}) · Services needed: ${worryText}${recs.length ? ` · Recommended: ${recs.map(r => r.name).join(', ')}` : ''}`;
+    $('#wzSend').href = waLink(`Hello Sutakem Solutions, I used the "Find the Right Solution" questionnaire on your website.\n\nProperty: ${placeName} (${SIZES[wz.size]})\nSelected Needs: ${worryText}\n${recs.length ? `Recommended Start: ${recs.map(r => r.name).join(', ')}\n` : ''}\nI would like to arrange a complimentary site assessment.`);
     $('#wzBook').onclick = () => { recs.forEach(r => survey.select(r.chip)); survey.setSetup(summary); };
     $('#wzBar').style.transform = 'scaleX(1)';
   }
@@ -365,7 +392,7 @@
   wzBack.addEventListener('click', () => wzGo(Math.max(0, wz.step - 1)));
 
   /* ==========================================================================
-     SITE VISIT REQUEST
+     SITE ASSESSMENT REQUEST
      ========================================================================== */
   const survey = (() => {
     const chosen = new Set();
@@ -375,15 +402,22 @@
     const ref = `SUT-${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(Math.floor(Math.random() * 900) + 100)}`;
     $('#ticketRef').textContent = ref;
     let setupText = '';
-    const val = id => $(id).value.trim();
+    const val = id => $(id) ? $(id).value.trim() : '';
     const chips = $$('.chip');
 
     function message() {
-      const lines = ['Hello Sutakem Solutions,', '', `I'd like to book a free site visit (ref ${ref}).`];
-      if (chosen.size) lines.push('', 'I need help with:', ...[...chosen].map(s => `- ${s}`));
-      if (setupText) lines.push('', `From "Find your setup": ${setupText}`);
-      const details = [['Name', val('#fName')], ['Phone', val('#fPhone')], ['Location', val('#fLoc')], ['Notes', val('#fMsg')]].filter(([, v]) => v);
-      if (details.length) lines.push('', ...details.map(([k, v]) => `${k}: ${v}`));
+      const lines = ['Hello Sutakem Solutions,', '', `I would like to request a complimentary site assessment (Ref ${ref}).`];
+      if (chosen.size) lines.push('', 'Services of interest:', ...[...chosen].map(s => `- ${s}`));
+      if (setupText) lines.push('', `From online assessment: ${setupText}`);
+      const details = [
+        ['Full Name', val('#fName')],
+        ['Phone', val('#fPhone')],
+        ['Organisation', val('#fOrg')],
+        ['Location', val('#fLoc')],
+        ['Preferred Contact Method', val('#fPref')],
+        ['Additional Notes', val('#fMsg')]
+      ].filter(([, v]) => v);
+      if (details.length) lines.push('', 'Contact Details:', ...details.map(([k, v]) => `${k}: ${v}`));
       lines.push('', 'Thank you.');
       return lines.join('\n');
     }
@@ -393,7 +427,7 @@
       planEl.textContent = setupText;
       const msg = message();
       $('#sendWa').href = waLink(msg);
-      $('#sendMail').href = `mailto:${EMAIL}?subject=${encodeURIComponent(`Free site visit request ${ref}`)}&body=${encodeURIComponent(msg)}`;
+      $('#sendMail').href = `mailto:${EMAIL}?subject=${encodeURIComponent(`Site Assessment Request ${ref}`)}&body=${encodeURIComponent(msg)}`;
     }
     function toggle(chip, force) {
       const v = chip.dataset.val;
@@ -404,7 +438,10 @@
       sync();
     }
     chips.forEach(c => { c.setAttribute('aria-pressed', 'false'); c.addEventListener('click', () => toggle(c)); });
-    ['#fName', '#fPhone', '#fLoc', '#fMsg'].forEach(id => $(id).addEventListener('input', sync));
+    ['#fName', '#fPhone', '#fOrg', '#fPref', '#fLoc', '#fMsg'].forEach(id => {
+      const el = $(id);
+      if (el) el.addEventListener('input', sync);
+    });
     const select = v => { const c = chips.find(x => x.dataset.val === v); if (c) toggle(c, true); };
     $$('[data-preselect]').forEach(a => a.addEventListener('click', () => select(a.dataset.preselect)));
     sync();

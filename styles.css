@@ -701,3 +701,172 @@ html.lenis, html.lenis body { height: auto; }
   .kicker { font-size: .7rem; letter-spacing: .16em; }
 }
 .contact-tile small { font-size: .68rem; letter-spacing: .08em; }
+
+/* ==========================================================================
+   CORPORATE & INSTITUTIONAL SECTION
+   ========================================================================== */
+.corporate { background: linear-gradient(180deg, var(--night-2) 0%, #0c1833 100%); }
+.corp-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 28px;
+  margin-top: 48px;
+}
+.corp-card {
+  background: rgba(14, 28, 62, 0.65);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 36px 32px;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.corp-title {
+  font-size: .82rem;
+  letter-spacing: .12em;
+  color: var(--gold);
+  margin-bottom: 24px;
+}
+.corp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.corp-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: .98rem;
+  line-height: 1.5;
+  color: var(--ice);
+}
+.corp-list li strong {
+  color: #fff;
+  font-weight: 600;
+}
+.corp-list li .ic {
+  color: var(--gold);
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.corp-sidebar {
+  gap: 32px;
+}
+.sector-tags {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.sector-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(5, 11, 24, 0.6);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  font-size: .88rem;
+  color: var(--ice);
+}
+.sector-tag .ic {
+  color: var(--gold);
+}
+.corp-cta-box {
+  background: rgba(5, 11, 24, 0.8);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.corp-cta-lead {
+  font-size: .76rem;
+  color: var(--gold);
+  letter-spacing: .12em;
+}
+.corp-cta-box p {
+  font-size: .92rem;
+  color: var(--mist);
+  line-height: 1.5;
+}
+
+.note-outcome {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line-2);
+  font-size: .94rem;
+  color: var(--champagne);
+}
+
+.field-select {
+  width: 100%;
+  background: rgba(5, 11, 24, 0.85);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--ice);
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23E8B53A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+.field-select:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+
+@media (max-width: 900px) {
+  .corp-grid { grid-template-columns: 1fr; }
+  .sector-tags { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   v6 · SERVICE CATALOGUE (10 services, client's wording)
+   ========================================================================== */
+.svc-index { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: clamp(48px, 7vw, 80px) auto 28px; max-width: 980px; }
+.svc-index a { font-size: .84rem; font-weight: 600; color: var(--ice); padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(236, 241, 255, .03); transition: border-color .25s, background .25s, color .25s; }
+.svc-index a:hover, .svc-index a:focus-visible { border-color: var(--gold); color: var(--gold-hi); background: rgba(232, 181, 58, .08); }
+.svc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(16px, 2.2vw, 26px); }
+.svc { scroll-margin-top: calc(var(--header-h) + 20px); border-radius: 20px; border: 1px solid var(--line); background: rgba(9, 20, 40, .7); overflow: hidden; display: grid; grid-template-columns: 42% 1fr; transition: border-color .3s; }
+.svc:hover, .svc:target { border-color: rgba(232, 181, 58, .45); }
+.svc-media { position: relative; background: #000; min-height: 100%; overflow: hidden; }
+.svc-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: scale 1.2s var(--ease); }
+.svc:hover .svc-media img { scale: 1.05; }
+.svc-media::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 60%, rgba(9, 20, 40, .55)); pointer-events: none; }
+.svc-media--icon { display: grid; place-items: center; background: radial-gradient(circle at 30% 25%, rgba(232, 181, 58, .16), transparent 60%), linear-gradient(160deg, #10234a, #070f22); isolation: isolate; }
+.svc-media--icon::before { content: ""; position: absolute; inset: 0; z-index: -1; background: url(assets/img/guilloche-rosette.svg) center / 140% no-repeat; opacity: .18; }
+.svc-media--icon .ic { width: 56px; height: 56px; color: var(--gold); stroke-width: 1.3; }
+.svc-body { padding: clamp(18px, 2vw, 26px); display: flex; flex-direction: column; gap: 10px; }
+.svc-num { font-size: .7rem; color: var(--gold); letter-spacing: .14em; }
+.svc-body h3 { font-size: clamp(1.08rem, 1.5vw, 1.3rem); font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
+.svc-intro { color: var(--mist); font-size: .94rem; line-height: 1.6; }
+.svc-more summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .86rem; font-weight: 600; color: var(--gold-hi); padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.svc-more summary::-webkit-details-marker { display: none; }
+.svc-more summary::after { content: "+"; font-size: 1.2rem; line-height: 1; transition: transform .3s var(--ease); }
+.svc-more[open] summary::after { transform: rotate(45deg); }
+.svc-more ul { margin: 12px 0 4px; display: grid; gap: 7px; }
+.svc-more li { position: relative; padding-left: 18px; font-size: .9rem; color: var(--ice); line-height: 1.5; }
+.svc-more li::before { content: ""; position: absolute; left: 2px; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.svc-extra { margin-top: 10px; font-size: .86rem; color: var(--champagne); }
+.svc-fit { font-size: .86rem; color: var(--mist); line-height: 1.55; }
+.svc-fit b { color: var(--ice); font-weight: 600; }
+.svc-cta { margin-top: auto; padding-top: 4px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: .92rem; color: var(--gold); }
+.svc-cta .ic { width: 16px; height: 16px; transition: transform .25s var(--ease); }
+.svc-cta:hover .ic { transform: translateX(4px); }
+@media (max-width: 1200px) { .svc { grid-template-columns: 1fr; } .svc-media { aspect-ratio: 16 / 9; } .svc-media::after { background: linear-gradient(180deg, transparent 60%, rgba(9, 20, 40, .55)); } }
+@media (max-width: 760px) { .svc-grid { grid-template-columns: 1fr; } .svc-index { justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; margin-inline: -20px; padding: 0 20px 6px; scrollbar-width: none; } .svc-index a { flex: none; } }
+@media (prefers-reduced-motion: reduce) { .svc-media img, .svc-more summary::after { transition: none; } }
+.ld-body li a { color: var(--ice); border-bottom: 1px solid rgba(232, 181, 58, .35); transition: color .2s, border-color .2s; }
+.ld-body li a:hover { color: var(--gold-hi); border-color: var(--gold); }
+.note-areas { font-size: .86rem; color: var(--mist); line-height: 1.6; }
+.foot-svc { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 18px; width: 100%; padding: 4px 0 14px; font-size: .86rem; }
+.foot-svc span { font-size: .7rem; color: var(--gold); letter-spacing: .12em; }
+.foot-svc a { color: var(--mist); transition: color .2s; }
+.foot-svc a:hover { color: var(--gold-hi); }
+.wz-options .wz-other, .wz-options [data-val="consult"] { grid-column: 1 / -1; justify-content: center; }
+.survey-today { text-align: center; font-weight: 600; color: var(--champagne); margin: 4px 0 22px; }
