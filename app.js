@@ -66,16 +66,28 @@
   };
   links.forEach(a => a.addEventListener('pointerenter', () => movePill(a)));
   island.addEventListener('pointerleave', () => movePill(activeLink));
-  const navIO = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      const a = links.find(l => l.getAttribute('href') === `#${e.target.id}`);
-      if (e.isIntersecting) activeLink = a;
-      else if (activeLink === a) activeLink = null;
-      links.forEach(l => l.classList.toggle('active', l === activeLink));
-      if (!island.matches(':hover')) movePill(activeLink);
-    });
-  }, { rootMargin: '-40% 0px -55% 0px' });
-  links.forEach(a => { const s = document.querySelector(a.getAttribute('href')); if (s) navIO.observe(s); });
+  // Active section comes from scroll position every frame (observers skip beats on busy frames).
+  const navTargets = links.map(a => document.querySelector(a.getAttribute('href')));
+  const sheetLinks = $$('.sheet-links a');
+  const navBar = $('#navProgress');
+  const syncNav = (y, vh) => {
+    const line = y + header.offsetHeight + vh * 0.3;
+    // a link stays active from its section's top until the next linked section starts
+    const tops = navTargets.map(s => (s ? s.getBoundingClientRect().top + y : Infinity));
+    let idx = -1;
+    tops.forEach((t, i) => { if (t <= line) idx = i; });
+    const last = navTargets[idx];
+    if (idx === tops.length - 1 && last && tops[idx] + last.offsetHeight <= line) idx = -1;
+    const cur = idx >= 0 ? links[idx] : null;
+    if (cur !== activeLink) {
+      activeLink = cur;
+      links.forEach(l => l.classList.toggle('active', l === cur));
+      sheetLinks.forEach(l => l.classList.toggle('active', !!cur && l.getAttribute('href') === cur.getAttribute('href')));
+      if (!island.matches(':hover')) movePill(cur);
+    }
+    const max = document.documentElement.scrollHeight - vh;
+    if (navBar) navBar.style.transform = `scaleX(${max > 0 ? Math.min(1, Math.max(0, y / max)).toFixed(4) : 0})`;
+  };
 
   /* ---------- live clock, Nairobi time ---------- */
   const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Nairobi', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
@@ -478,6 +490,8 @@
   const paraIO = new IntersectionObserver(es => es.forEach(e => (e.isIntersecting ? para.add(e.target) : para.delete(e.target))), { rootMargin: '10% 0px' });
   $$('.note-img img').forEach(el => paraIO.observe(el));
 
+  const chapters = $$('.chapter');
+  if (reduced) chapters.forEach(c => c.style.setProperty('--cp', '1'));
   let tickX = 0, skew = 0, lastY = scrollY, tickHalf = 0;
   const measure = () => { tickHalf = ticker.scrollWidth / 2; movePill(activeLink); };
   measure(); addEventListener('resize', measure);
@@ -491,6 +505,14 @@
 
     header.classList.toggle('scrolled', y > 20);
     fab.classList.toggle('show', y > hero.offsetHeight * 0.7);
+    syncNav(y, vh);
+
+    // photo chapters: --cp goes 0 -> 1 while the chapter crosses the screen
+    chapters.forEach(c => {
+      const b = c.getBoundingClientRect();
+      if (b.bottom < 0 || b.top > vh) return;
+      c.style.setProperty('--cp', clamp((vh - b.top) / (vh + b.height * 0.5), 0, 1).toFixed(3));
+    });
 
     if (!reduced) {
       const dir = vel < -0.2 ? -1 : 1;

@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=1795505869">
+<link rel="stylesheet" href="styles.css?v=1795507030">
 </head>
 <body>
 
@@ -28,7 +28,14 @@
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
     <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
-    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-cam" viewBox="0 0 24 24"><path d="M3 7h13l3 3-3 3H3z"/><path d="M6 13v4M3 17h6"/><circle cx="12" cy="10" r="1.2"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></symbol>
+  <symbol id="i-rack" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M8 6h.01M8 12h.01M8 18h.01"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><path d="M12 19.5h.01"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3h14v18l-2.5-1.5L14 21l-2-1.5L10 21l-2.5-1.5L5 21z"/><path d="M9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
   <symbol id="i-fence" viewBox="0 0 24 24"><path d="M4 21V6l2-2 2 2v15M16 21V6l2-2 2 2v15"/><path d="M8 9h8M8 14h8"/><path d="m12.5 15.5-1.5 2.5h2l-1.5 2.5"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><rect x="9" y="10" width="6" height="5" rx="1"/><path d="M10 10V8.5a2 2 0 0 1 4 0V10"/></symbol>
   <symbol id="i-intercom" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><circle cx="12" cy="7" r="2"/><path d="M9.5 12h.01M12 12h.01M14.5 12h.01M9.5 15h.01M12 15h.01M14.5 15h.01"/><path d="M10 19h4"/></symbol>
@@ -48,19 +55,21 @@
       <span class="brand-word"><b>SUTAKEM</b><small>SOLUTIONS</small></span>
     </a>
     <nav class="island" aria-label="Main">
-      <a href="#services">Our Services</a>
+      <a href="#services">Services</a>
       <a href="#corporate">Corporate</a>
-      <a href="#setup">Find the Right Solution</a>
-      <a href="#work">Our Projects</a>
+      <a href="#setup">Solution Finder</a>
+      <a href="#etims">eTIMS</a>
+      <a href="#work">Projects</a>
       <a href="#faq">FAQs</a>
       <span class="island-pill" aria-hidden="true"></span>
     </nav>
     <div class="nav-right">
       <a class="nav-phone" href="tel:+254790444921"><svg class="ic"><use href="#i-phone"/></svg><span>0790 444 921</span></a>
-      <a href="#survey" class="btn btn-gold btn-sm nav-cta">Request an Assessment</a>
+      <a href="#survey" class="btn btn-gold btn-sm nav-cta">Book Assessment</a>
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false" aria-controls="menuSheet"><span></span><span></span></button>
     </div>
   </div>
+  <span class="nav-progress" aria-hidden="true"><i id="navProgress"></i></span>
 </header>
 
 <!-- Full-screen menu (phones & tablets) -->
@@ -95,7 +104,8 @@
         <span class="line"><span><em>matters</em></span></span>
         <span class="line"><span><em>most.</em></span></span>
       </h1>
-      <p class="lede">Sutakem Solutions provides reliable security, networking, and technology solutions for homes, businesses, schools, and institutions across Kenya. From security system installation and IT infrastructure to electronic tax solutions and technical support, we deliver practical, tailored solutions designed to protect your property, improve operations, and support business efficiency.</p>
+      <p class="lede">Sutakem Solutions provides reliable security, networking, and technology solutions for homes, businesses, schools, and institutions across Kenya.</p>
+      <p class="lede-more">From security system installation and IT infrastructure to electronic tax solutions and technical support, we deliver practical, tailored solutions designed to protect your property, improve operations, and support business efficiency.</p>
       <div class="hero-ctas">
         <a href="#survey" class="btn btn-gold">Request a Site Assessment <svg class="ic"><use href="#i-arrow"/></svg></a>
         <a href="https://wa.me/254790444921?text=Hello%20Sutakem%20Solutions%2C%20I%20would%20like%20to%20request%20a%20site%20assessment." class="btn btn-ghost" target="_blank" rel="noopener"><svg class="ic"><use href="#i-chat"/></svg> Speak to Our Team</a>
@@ -163,6 +173,15 @@
   </div>
 </section>
 
+<!-- ============ CHAPTER: tagline over full-bleed photo ============ -->
+<section class="chapter" aria-label="Sutakem Solutions">
+  <div class="chapter-media"><img src="assets/img/svc-fence.jpg" alt="Sutakem technicians installing an electric fence" loading="lazy" decoding="async"></div>
+  <div class="wrap chapter-copy">
+    <p class="eyebrow">Sutakem Solutions</p>
+    <h2>Professional installation.<br><em>Tailored solutions.</em><br>Reliable technical support.</h2>
+  </div>
+</section>
+
 <!-- ============ OUR SERVICES ============ -->
 <section class="section layers" id="services">
   <div class="wrap">
@@ -221,8 +240,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>CCTV camera supply and installation.</li><li>Indoor and outdoor surveillance systems.</li><li>Network Video Recorder (NVR) and Digital Video Recorder (DVR) configuration.</li><li>Remote viewing through smartphones and computers.</li><li>Recording, storage, and playback configuration.</li><li>System inspection, maintenance, and troubleshooting.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Homes, offices, schools, commercial premises, warehouses, and institutions.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Homes, offices, schools, commercial premises, warehouses, and institutions.</p>
           <a class="svc-cta" href="#survey" data-preselect="CCTV surveillance &amp; monitoring">Request a CCTV Assessment <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -235,8 +255,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Fingerprint and biometric access systems.</li><li>Card and PIN-based entry systems.</li><li>Electronic door locks and access readers.</li><li>Access permissions and user registration.</li><li>Entry monitoring and access records.</li><li>Installation, configuration, and maintenance.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Offices, schools, residential developments, commercial buildings, and restricted-access facilities.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Offices, schools, residential developments, commercial buildings, and restricted-access facilities.</p>
           <a class="svc-cta" href="#survey" data-preselect="Access control &amp; entry management">Secure Your Premises <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -249,8 +270,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Intruder alarm installation and configuration.</li><li>Motion and entry detection sensors.</li><li>Door and window security sensors.</li><li>Alarm control panels and keypads.</li><li>Audible alarm and notification configuration.</li><li>System testing, maintenance, and troubleshooting.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Homes, offices, retail outlets, warehouses, and commercial properties.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Homes, offices, retail outlets, warehouses, and commercial properties.</p>
           <a class="svc-cta" href="#survey" data-preselect="Intruder alarm systems">Request an Alarm System Assessment <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -263,8 +285,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Electric fence installation.</li><li>Perimeter security planning and configuration.</li><li>Electric fence energizer installation.</li><li>Fence inspection and fault detection.</li><li>System maintenance and repairs.</li><li>Integration with compatible alarm systems.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Residential properties, estates, schools, warehouses, farms, and commercial premises.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Residential properties, estates, schools, warehouses, farms, and commercial premises.</p>
           <a class="svc-cta" href="#survey" data-preselect="Electric fencing &amp; perimeter security">Strengthen Your Perimeter Security <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -277,8 +300,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Data and network cabling installation.</li><li>Network points and outlet installation.</li><li>Patch panels and network cabinet configuration.</li><li>Cable routing, termination, and labelling.</li><li>Network infrastructure organisation.</li><li>Testing, fault identification, and maintenance.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Offices, schools, commercial buildings, institutions, and residential developments.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Offices, schools, commercial buildings, institutions, and residential developments.</p>
           <a class="svc-cta" href="#survey" data-preselect="Structured cabling">Plan Your Network Infrastructure <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -291,8 +315,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Wired and wireless network installation.</li><li>Business and residential Wi-Fi setup.</li><li>Router, switch, and access point configuration.</li><li>Network coverage planning and optimisation.</li><li>Network expansion and troubleshooting.</li><li>Connectivity maintenance and technical support.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Homes, offices, schools, hotels, commercial premises, and institutions.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Homes, offices, schools, hotels, commercial premises, and institutions.</p>
           <a class="svc-cta" href="#survey" data-preselect="Networking &amp; Wi-Fi solutions">Improve Your Connectivity <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -305,8 +330,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>ETR machine installation, servicing, and repairs.</li><li>eTIMS installation and configuration.</li><li>ETR and POS system integration.</li><li>Integration with compatible accounting and ERP systems.</li><li>QuickBooks, Zoho, Odoo, and Sage integration, where supported.</li><li>System troubleshooting and technical assistance.</li></ul><p class="svc-extra">ETR models supported: Incotex 181, Incotex 600, Incotex 777, and Aclass.</p>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Retail shops, supermarkets, SMEs, wholesalers, and other businesses requiring electronic invoicing solutions.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Retail shops, supermarkets, SMEs, wholesalers, and other businesses requiring electronic invoicing solutions.</p>
           <a class="svc-cta" href="#survey" data-preselect="eTIMS &amp; ETR solutions">Get Assistance With Your eTIMS Setup <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -319,8 +345,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Desktop and laptop repairs.</li><li>Computer diagnostics and troubleshooting.</li><li>Hardware upgrades and component replacement.</li><li>Software installation and configuration.</li><li>Operating system installation and maintenance.</li><li>Computer servicing and performance optimisation.</li><li>General IT technical support.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Individuals, offices, schools, SMEs, and institutions.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Individuals, offices, schools, SMEs, and institutions.</p>
           <a class="svc-cta" href="#survey" data-preselect="Computer maintenance &amp; IT support">Request IT Support <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -333,8 +360,9 @@
           <details class="svc-more">
             <summary>Our services include:</summary>
             <ul><li>Audio and video intercom installation.</li><li>Door communication and entry systems.</li><li>Fingerprint and biometric identification devices.</li><li>Staff attendance and timekeeping systems.</li><li>User registration and system configuration.</li><li>Maintenance and technical support.</li></ul>
+          
+            <p class="svc-fit"><b>Suitable for:</b> Residential buildings, offices, schools, apartments, and commercial facilities.</p>
           </details>
-          <p class="svc-fit"><b>Suitable for:</b> Residential buildings, offices, schools, apartments, and commercial facilities.</p>
           <a class="svc-cta" href="#survey" data-preselect="Intercom &amp; biometric systems">Explore Our Entry &amp; Biometric Solutions <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
       </article>
@@ -344,27 +372,35 @@
   </div>
 </section>
 
+<!-- ============ CHAPTER: corporate ============ -->
+<section class="chapter chapter--corp" id="corporate" aria-label="Corporate and institutional">
+  <div class="chapter-media"><img src="assets/img/svc-access.jpg" alt="Sutakem technicians testing an access control reader in an office" loading="lazy" decoding="async"></div>
+  <div class="wrap chapter-copy">
+    <p class="eyebrow">Corporate &amp; Institutional</p>
+    <h2>Integrated solutions for <em>businesses &amp; institutions.</em></h2>
+  </div>
+</section>
+
 <!-- ============ SOLUTIONS FOR BUSINESSES & INSTITUTIONS ============ -->
-<section class="section corporate" id="corporate">
+<section class="section corporate">
   <div class="wrap">
-    <div class="head reveal">
-      <p class="eyebrow">Corporate &amp; Institutional</p>
-      <h2>Integrated solutions for <em>businesses &amp; institutions.</em></h2>
-      <p class="sub">Sutakem Solutions supports organisations with reliable security, IT infrastructure, networking, and business technology solutions. We work with businesses and institutions to assess their operational requirements and provide appropriate solutions based on their facilities, infrastructure, and objectives.</p>
+    <div class="head head-corp reveal">
+      <p class="sub-lead">Sutakem Solutions supports organisations with reliable security, IT infrastructure, networking, and business technology solutions.</p>
+      <p class="sub">We work with businesses and institutions to assess their operational requirements and provide appropriate solutions based on their facilities, infrastructure, and objectives.</p>
     </div>
 
     <div class="corp-grid reveal">
       <div class="corp-card">
         <h3 class="mono corp-title">OUR INSTITUTIONAL SOLUTIONS COVER</h3>
-        <ul class="corp-list">
-          <li><svg class="ic"><use href="#i-check"/></svg><span>CCTV surveillance and centralised monitoring.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>Electronic access control and attendance management.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>Perimeter security and alarm systems.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>Structured cabling and network infrastructure.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>Business Wi-Fi and connectivity solutions.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>Computer laboratory setup and IT support.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>eTIMS and accounting system integration.</span></li>
-          <li><svg class="ic"><use href="#i-check"/></svg><span>Ongoing technical support and maintenance.</span></li>
+        <ul class="corp-tiles">
+          <li><svg class="ic" aria-hidden="true"><use href="#i-cam"/></svg><span>CCTV surveillance and centralised monitoring.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg><span>Electronic access control and attendance management.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-fence"/></svg><span>Perimeter security and alarm systems.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-rack"/></svg><span>Structured cabling and network infrastructure.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-wifi"/></svg><span>Business Wi-Fi and connectivity solutions.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-laptop"/></svg><span>Computer laboratory setup and IT support.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-receipt"/></svg><span>eTIMS and accounting system integration.</span></li>
+          <li><svg class="ic" aria-hidden="true"><use href="#i-tools"/></svg><span>Ongoing technical support and maintenance.</span></li>
         </ul>
       </div>
 
@@ -476,7 +512,8 @@
     <div class="etims-copy reveal">
       <p class="eyebrow">eTIMS, ETR &amp; Business Systems</p>
       <h2>Reliable eTIMS, ETR <em>&amp; business integration solutions.</em></h2>
-      <p class="sub">Keep your business invoicing systems operational and properly configured with professional ETR and eTIMS support. We provide ETR machine repairs, eTIMS installation, system configuration, and integration with compatible POS and accounting platforms. Whether you are setting up a new system, experiencing technical difficulties, or looking to connect your invoicing processes with your accounting software, our team can assist.</p>
+      <p class="sub-lead">Keep your business invoicing systems operational and properly configured with professional ETR and eTIMS support.</p>
+      <p class="sub">We provide ETR machine repairs, eTIMS installation, system configuration, and integration with compatible POS and accounting platforms. Whether you are setting up a new system, experiencing technical difficulties, or looking to connect your invoicing processes with your accounting software, our team can assist.</p>
 
       <h3 class="mini mono">Our solutions include</h3>
       <ul class="etims-list">
@@ -776,7 +813,7 @@
 <a class="wa-fab" href="https://wa.me/254790444921" target="_blank" rel="noopener" aria-label="Chat on WhatsApp"><svg class="ic"><use href="#i-chat"/></svg><span>Chat with us</span></a>
 
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.4/dist/lenis.min.js" defer></script>
-<script src="facts.js?v=1795505869" defer></script>
-<script src="app.js?v=1795505869" defer></script>
+<script src="facts.js?v=1795507030" defer></script>
+<script src="app.js?v=1795507030" defer></script>
 </body>
 </html>
