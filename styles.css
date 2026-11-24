@@ -904,3 +904,51 @@ html.lenis, html.lenis body { height: auto; }
 /* comfortable thumb targets (44px) on the service cards and service index */
 .svc-cta { min-height: 44px; padding-block: 10px; }
 .svc-index a { min-height: 40px; display: inline-flex; align-items: center; }
+
+/* ==========================================================================
+   v8 · refined type + compact, product-page flow (benchmark: Huawei WATCH GT 7)
+   Client: "font ni kubwa sana" -> smaller, lighter headings; shorter page on phones.
+   ========================================================================== */
+h1, h2, h3 { font-weight: 600; letter-spacing: -.025em; }
+h2 { font-size: clamp(1.6rem, 3.1vw, 2.6rem); line-height: 1.12; }
+.hero-title { font-size: clamp(2.3rem, 4.8vw, 4.3rem); line-height: 1.02; font-weight: 600; }
+.statement-text { font-size: clamp(1.45rem, 3.2vw, 2.9rem); }
+.foot-cta h2 { font-size: clamp(1.8rem, 3.6vw, 3rem); }
+.pb b { font-size: clamp(1.6rem, 2.6vw, 2.3rem); }
+.ld-body h3 { font-size: clamp(1.2rem, 1.7vw, 1.5rem); }
+.wz-step h3 { font-size: clamp(1.15rem, 2vw, 1.55rem); }
+.sub { font-size: 1rem; }
+.section { padding: clamp(64px, 8vw, 116px) 0; }
+.statement { padding: clamp(72px, 11vw, 150px) 0; }
+.head { margin-bottom: clamp(32px, 4.5vw, 56px); }
+
+/* services: nine cards = a clean 3 x 3 on desktop */
+.svc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .svc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* phones: swipe through services like a product gallery */
+.svc-progress { display: none; height: 3px; border-radius: 3px; background: var(--line-2); margin: 8px auto 0; max-width: 200px; overflow: hidden; }
+.svc-progress span { display: block; height: 100%; width: 100%; background: var(--gold); transform: scaleX(.11); transform-origin: left; transition: transform .25s var(--ease); }
+.svc-hint { display: none; text-align: center; font-size: .78rem; color: var(--dim); margin-top: 10px; }
+@media (max-width: 760px) {
+  .svc-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin-inline: -16px; padding: 4px 16px 6px; scrollbar-width: none; overscroll-behavior-x: contain; scroll-padding-inline: 16px; }
+  .svc-grid::-webkit-scrollbar { display: none; }
+  .svc { flex: 0 0 86%; scroll-snap-align: start; }
+  .svc.reveal { opacity: 1; transform: none; filter: none; }
+  .svc-progress, .svc-hint { display: block; }
+}
+
+/* phones: calmer type, centred logo watermark, shorter sections */
+@media (max-width: 600px) {
+  .hero-title { font-size: clamp(2.1rem, 10vw, 2.75rem); }
+  h2 { font-size: clamp(1.45rem, 6.6vw, 1.9rem); }
+  .statement-text { font-size: clamp(1.3rem, 6vw, 1.7rem); }
+  .foot-cta h2 { font-size: clamp(1.5rem, 7vw, 2rem); }
+  .hero-swirl { width: 92vw; right: auto; left: 50%; top: 24%; translate: -50% -50%; opacity: .05; }
+  .section { padding: 56px 0; }
+}
+/* phones: show the footer wordmark whole (the sliced "rising" effect only reads well on desktop) */
+@media (max-width: 900px) {
+  .foot-giant { font-size: 13.5vw; line-height: 1; margin: 6px 0 10px; }
+}
+.etims-copy > .mini { margin-top: 26px; }

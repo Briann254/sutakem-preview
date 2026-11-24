@@ -21,6 +21,12 @@
   const header = $('.site-header');
   const goTo = target => {
     const top = target === 'top';
+    // On phones the services are a horizontal carousel: scroll the page to it, then slide to the card.
+    const rail = target !== 'top' && target.closest && target.closest('.svc-grid');
+    if (rail && rail.scrollWidth > rail.clientWidth + 4) {
+      rail.scrollTo({ left: target.offsetLeft - rail.offsetLeft - 16, behavior: reduced ? 'auto' : 'smooth' });
+      target = rail;
+    }
     if (lenis) lenis.scrollTo(top ? 0 : target, { offset: -header.offsetHeight - 8, duration: 1.4 });
     else top ? scrollTo({ top: 0 }) : target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
   };
@@ -211,7 +217,7 @@
     access: 'Access Control & Entry Management', intercom: 'Intercom & Biometric Solutions',
     cctv: 'CCTV Surveillance & Monitoring',
     cabling: 'Structured Cabling & Network Infrastructure', wifi: 'Networking & Wi-Fi Solutions',
-    etims: 'eTIMS & ETR Solutions', it: 'IT Support & Computer Maintenance', cyber: 'Cybersecurity & Digital Protection'
+    etims: 'eTIMS & ETR Solutions', it: 'IT Support & Computer Maintenance'
   };
   const LAYERS = [
     { key: 'Perimeter', img: 'svc-fence.jpg', title: 'Perimeter Protection',
@@ -227,8 +233,8 @@
       why: 'An organised cabling infrastructure and dependable Wi-Fi that support communication, productivity, and the systems that run on your network.',
       items: ['cabling', 'wifi'] },
     { key: 'Business', img: 'etims.jpg', title: 'Business Technology',
-      why: 'Invoicing systems, computers, and digital protection that keep your daily operations running.',
-      items: ['etims', 'it', 'cyber'] }
+      why: 'Invoicing systems and dependable computers that keep your daily operations running.',
+      items: ['etims', 'it'] }
   ];
   LAYERS.forEach(l => { const i = new Image(); i.src = `assets/img/${l.img}`; });
   const detail = $('#layerDetail');
@@ -267,6 +273,20 @@
   new IntersectionObserver(([e]) => { layersVisible = e.isIntersecting; if (layersVisible) layerStart = performance.now(); }, { threshold: 0.3 }).observe($('.layers-box'));
   showLayer(0);
 
+  /* phones: services carousel progress bar */
+  const svcRail = $('.svc-grid'), svcBar = $('#svcProgress');
+  if (svcRail && svcBar) {
+    const cards = $$('.svc', svcRail).length || 1;
+    const update = () => {
+      const max = svcRail.scrollWidth - svcRail.clientWidth;
+      const p = max > 0 ? svcRail.scrollLeft / max : 0;
+      svcBar.style.transform = `scaleX(${Math.max(1 / cards, p)})`;
+    };
+    svcRail.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+  }
+
   /* ==========================================================================
      FIND YOUR SETUP (3 questions, plain-language result, no fake numbers)
      ========================================================================== */
@@ -291,11 +311,10 @@
     wifi: { name: 'Networking & Wi-Fi', chip: 'Networking & Wi-Fi solutions', why: 'Dependable wired and wireless connectivity where you need it.' },
     etims: { name: 'eTIMS & ETR solutions', chip: 'eTIMS & ETR solutions', why: 'Installation, configuration, and integration with compatible POS and accounting systems.' },
     it: { name: 'IT support & computer maintenance', chip: 'Computer maintenance & IT support', why: 'Diagnostics, repairs, upgrades, and general technical support.' },
-    cyber: { name: 'Cybersecurity solutions', chip: 'Cybersecurity solutions', why: 'Practical measures to reduce security risks and protect your information.' },
     consult: { name: 'General technical consultation', chip: 'General technical consultation', why: 'We discuss your requirements and guide you towards the most suitable option.' }
   };
   const WORRIES = Object.fromEntries(Object.entries(RECS).map(([k, r]) => [k, r.name]));
-  const ORDER = ['fence', 'alarm', 'access', 'intercom', 'cctv', 'cabling', 'wifi', 'etims', 'it', 'cyber', 'consult'];
+  const ORDER = ['fence', 'alarm', 'access', 'intercom', 'cctv', 'cabling', 'wifi', 'etims', 'it', 'consult'];
 
   /**
    * Turn the answers into a recommended starting point.
